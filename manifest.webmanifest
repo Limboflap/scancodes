@@ -1,0 +1,16 @@
+{
+  "name": "Scancodes",
+  "short_name": "Scancodes",
+  "description": "Je werkbon-barcodes altijd bij de hand om te scannen met de Action Tracker.",
+  "lang": "nl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f3f1",
+  "theme_color": "#f2b705",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

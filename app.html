@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; worker-src blob: https://cdn.jsdelivr.net; connect-src https://cdn.jsdelivr.net https://raw.githubusercontent.com blob: data:; img-src data: blob:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mijn scancodes</title>
+<style>
+/* VOICE: praktisch werkplaatsgereedschap, kort en direct Nederlands
+   IDEA: het gelamineerde codekaartje dat bij de machine hangt
+   PICTURE: de gekozen barcode, groot op een wit label
+   COLOUR and TYPE: tracker-geel, inktzwart, wit label; Barlow Condensed + Barlow
+   LAYOUT: gele kopband, label bovenaan, lijst eronder; twee kolommen vanaf 900px */
+:root{color-scheme:light dark;--bg:#f3f3f1;--ink:#141414;--mute:#585752;--card:#fff;--line:#d9d8d2;--y:#f2b705;--yk:#141414;--red:#b3261e;--on:rgba(242,183,5,.22)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121212;--ink:#f0efeb;--mute:#a8a69f;--card:#1d1d1d;--line:#343434;--red:#ff7b72;--on:rgba(242,183,5,.18)}}
+:root[data-theme=dark]{--bg:#121212;--ink:#f0efeb;--mute:#a8a69f;--card:#1d1d1d;--line:#343434;--red:#ff7b72;--on:rgba(242,183,5,.18)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif;overflow-x:clip}
+h1,h2,.nm{font-family:"Barlow Condensed","Avenir Next Condensed",sans-serif-condensed,sans-serif;font-weight:700;line-height:1.05;margin:0}
+.top{background:var(--y);color:var(--yk);padding:10px max(5vw,16px) 44px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.top .gear{border:0;background:transparent;color:var(--yk);min-width:44px;padding:0;display:grid;place-items:center}.top .gear svg{width:26px;height:26px}
+.top h1{font-size:clamp(26px,4vw,40px)}
+.top p{margin:6px 0 0;max-width:60ch}
+.wrap{max-width:1240px;margin:-34px auto 0;padding:0 max(5vw,16px) 48px;display:grid;gap:24px}
+@media(min-width:900px){.wrap{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start}.stage{position:sticky;top:16px}}
+.label{background:#fff;color:#111;border-radius:12px;box-shadow:0 1px 0 rgba(0,0,0,.08),0 10px 28px rgba(0,0,0,.16);padding:14px 16px 10px;cursor:zoom-in}
+.label .hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.label .hd .sub{flex:none}
+.label .nm{font-size:clamp(24px,4vw,34px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.label .sub{color:#555;font-size:14px;margin-top:2px}
+.bc{margin:14px 0 6px}
+.bc svg{display:block;width:100%;height:clamp(84px,min(32vw,22vh),190px)}
+.label .bc{margin:10px 0 4px}
+.zoom{font:500 13px Barlow,sans-serif;color:#666;text-align:center;margin-top:2px}
+.codetxt{font:600 18px/1.2 Barlow,sans-serif;letter-spacing:.06em;text-align:center;color:#111;overflow-wrap:anywhere}
+.empty{padding:34px 8px;text-align:center;color:#555}
+.empty b{display:block;font:700 26px/1.1 "Barlow Condensed","Avenir Next Condensed",sans-serif-condensed,sans-serif;color:#111;margin-bottom:6px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+button,.btn{font:600 16px Barlow,sans-serif;min-height:44px;padding:0 16px;border-radius:8px;border:2px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--y);outline-offset:2px}
+.pri{background:var(--ink);color:var(--bg)}
+.yel{background:var(--y);border-color:var(--y);color:var(--yk)}
+.grow{flex:1}#addBtn{white-space:nowrap}
+.std{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:8px;margin-top:12px}.std:empty{display:none}
+.std button{min-height:clamp(48px,13vw,58px);font:700 clamp(15px,4.4vw,20px)/1.05 "Barlow Condensed","Avenir Next Condensed",sans-serif-condensed,sans-serif;background:var(--card);padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.std button[aria-pressed=true]{background:var(--y);border-color:var(--y);color:var(--yk)}
+.recent{margin-top:12px}
+.recent h2,.side h2{font-size:20px;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.recent .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-inline:calc(-1*max(5vw,16px));padding-inline:max(5vw,16px)}.recent .chips::-webkit-scrollbar{display:none}
+.recent .chip{flex:none;max-width:75vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav{min-width:clamp(46px,13vw,56px);padding:0;font-size:22px}
+.row>button,.row>.btn{font-size:clamp(14px,4vw,16px)}
+.row>.nav{font-size:24px}
+#bigBtn,#shareBtn{white-space:nowrap}
+#shareBtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px}
+#shareBtn svg{width:20px;height:20px;flex:none}
+@media (max-width:379px){#shareBtn{padding:0;min-width:46px}#shareBtn .t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}#bigBtn{padding:0 8px}}
+@media (max-width:359px){#addBtn{padding:0;width:54px;height:54px;min-height:0;justify-content:center;border-radius:50%}#addBtn .t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}}
+@media (min-width:600px) and (max-width:899px){.wrap{max-width:680px}}
+@media (orientation:landscape) and (max-height:520px){
+  .top{padding:6px max(3vw,12px) 30px}.top h1{font-size:24px}
+  .wrap{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start;margin-top:-22px;gap:16px;max-width:none}
+  #shareBtn{padding:0;min-width:46px}#shareBtn .t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .stage{position:sticky;top:8px}
+  .label{padding:10px 12px 8px}.label .bc{margin:6px 0 2px}.bc svg{height:clamp(64px,26vh,120px)}.label .zoom{display:none}
+  .std{margin-top:8px}.std button{min-height:44px}
+}
+.arch{opacity:.6}.tag{display:inline-block;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:2px}
+.linkbtn{border:0;background:none;color:var(--mute);text-decoration:underline;min-height:44px;padding:0 4px;font-weight:500}
+.chip{min-height:40px;padding:0 12px;border-width:1.5px;font-weight:500;border-color:var(--line);background:var(--card)}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tip{color:var(--mute);font-size:14px;margin:12px 0 0}
+.side{display:grid;gap:14px}
+.bar{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+#q{flex:1 1 170px}
+input,select,textarea{font:16px Barlow,sans-serif;width:100%;min-height:44px;padding:8px 12px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+textarea{min-height:110px;font-size:14px}
+.list{list-style:none;margin:0;padding:0;background:var(--card);border-radius:12px;border:1px solid var(--line);overflow:hidden}
+.list li{display:flex;align-items:stretch;border-top:1px solid var(--line)}
+.list li:first-child{border-top:0}
+.list li.on{background:var(--on);background:color-mix(in srgb,var(--y) 22%,var(--card))}
+.pick{flex:1;text-align:left;border:0;border-radius:0;min-height:60px;padding:8px 14px;font-weight:500}
+.pick .nm{font-size:21px;display:block}
+.pick small{color:var(--mute);font-size:14px;overflow-wrap:anywhere}
+.ic{border:0;border-radius:0;width:52px;padding:0;font-size:20px;color:var(--mute)}
+.picks{list-style:none;margin:8px 0;padding:0;border:1px solid var(--line);border-radius:10px;max-height:38vh;overflow-y:auto}
+.picks li{border-top:1px solid var(--line)}.picks li:first-child{border-top:0}
+.picks label{display:flex;align-items:center;gap:12px;min-height:52px;padding:6px 12px;cursor:pointer}
+.picks input{width:22px;height:22px;min-height:0;flex:none;accent-color:var(--ink)}
+.picks small{display:block;color:var(--mute);font-size:13px}
+.msgprev{white-space:pre-wrap;font-size:13px;color:var(--mute);background:var(--bg);border-radius:8px;padding:8px 10px;max-height:120px;overflow:auto;overflow-wrap:anywhere;margin:8px 0 0}
+.ic.pin{color:var(--y);color:color-mix(in srgb,var(--y) 72%,var(--ink))}
+.none{padding:22px 16px;color:var(--mute)}
+form.add{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px}
+form.add[hidden]{display:none}
+label.f{display:grid;gap:4px;font-weight:600;font-size:15px}
+label.f span{font-weight:400;color:var(--mute);font-size:14px}
+.two{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.err{color:var(--red);font-size:15px;min-height:1em;margin:0}
+.del{border-color:var(--red);color:var(--red)}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0 16px}
+summary{cursor:pointer;min-height:48px;display:flex;align-items:center;font-weight:600}
+details[open]{padding-bottom:16px}
+details p{margin:0 0 10px;color:var(--mute);font-size:15px}
+#full{position:fixed;inset:0;background:#fff;color:#111;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(6px,2vh,14px);padding:max(12px,env(safe-area-inset-top)) 16px max(12px,env(safe-area-inset-bottom))}
+#full[hidden]{display:none}
+#full .nm{font-size:clamp(20px,min(7vw,7vh),54px);text-align:center;max-width:100%;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#full .bc{width:min(96vw,1100px)}
+#full .bc svg{height:clamp(80px,min(42vh,50vw),320px)}
+#full .row{flex-wrap:nowrap}
+#full button{border-color:#111;color:#111}
+#full .pri{background:#111;color:#fff}
+.vh{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.ph{display:flex;align-items:center;justify-content:center;width:100%;position:relative}
+.hint{margin:8px 0 0;color:var(--mute);font-size:15px}
+#found,#names{margin-top:8px}#found:empty,#names:empty{display:none}
+#crop{display:block;max-width:100%;max-height:220px;border-radius:8px;border:1px solid var(--line);margin-top:10px;background:#fff}
+#crop[hidden]{display:none}
+#addBtn{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));z-index:7;display:flex;align-items:center;gap:8px;min-height:50px;padding:0 18px 0 14px;border:0;border-radius:25px;background:var(--y);color:var(--yk);font:700 18px/1 "Barlow Condensed","Avenir Next Condensed",sans-serif-condensed,sans-serif;box-shadow:0 2px 0 rgba(0,0,0,.12),0 8px 22px rgba(0,0,0,.28)}
+#addBtn svg{width:22px;height:22px;flex:none}
+#addBtn[hidden]{display:none}
+body{padding-bottom:96px}
+#terms{position:fixed;inset:0;z-index:11;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
+#terms[hidden]{display:none}
+#terms .tbox{background:var(--card);color:var(--ink);width:100%;max-width:640px;max-height:92vh;max-height:92dvh;overflow-y:auto;border-radius:16px 16px 0 0;padding:20px 18px calc(18px + env(safe-area-inset-bottom))}
+#terms h2{font-size:28px;margin-bottom:4px}
+#terms ol{padding-left:20px;margin:10px 0}#terms li{margin-bottom:8px;font-size:15px;line-height:1.45}
+#scan{position:fixed;inset:0;z-index:9;background:#000;color:#fff}
+#scan[hidden]{display:none}
+#scanVid{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+#scan .aim{position:absolute;left:8%;right:8%;top:34%;height:24%;border:3px solid var(--y);border-radius:14px;box-shadow:0 0 0 100vmax rgba(0,0,0,.35)}
+#scanMsg{position:absolute;left:16px;right:16px;top:calc(18px + env(safe-area-inset-top));margin:0;text-align:center;font:600 18px/1.3 Barlow,sans-serif;text-shadow:0 1px 3px #000}
+#scan .scanbar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:16px 16px calc(20px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.6))}
+#scan .scanbar button,#scan .scanbar .btn{border-color:#fff;color:#fff;display:inline-flex;align-items:center;position:relative}
+#scan .scanbar .pri{background:#fff;color:#111}
+#scan .scanbar [hidden]{display:none}
+#sheetBg{position:fixed;inset:0;z-index:8;background:rgba(0,0,0,.45)}
+#sheetBg[hidden]{display:none}
+form.add{position:fixed;left:0;right:0;bottom:0;z-index:9;max-width:640px;margin:0 auto;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;border-radius:16px 16px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.25)}
+#settings,#shareSheet,#recvSheet{position:fixed;left:0;right:0;bottom:0;z-index:9;max-width:640px;margin:0 auto;max-height:92vh;max-height:92dvh;overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:16px 16px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.25)}
+#settings[hidden],#shareSheet[hidden],#recvSheet[hidden]{display:none}
+#settings h3,.sheetbox h3{font:700 19px/1.1 "Barlow Condensed","Avenir Next Condensed",sans-serif-condensed,sans-serif;margin:18px 0 8px}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:10px}
+.swatches button{min-height:64px;border-radius:12px;border:2px solid var(--line);padding:0;display:grid;place-items:end center;font:600 13px/1 Barlow,sans-serif;padding-bottom:6px;color:var(--c-ink)}
+.swatches button[aria-checked=true]{outline:3px solid var(--ink);outline-offset:2px}
+input[type=color]{padding:4px;height:52px;cursor:pointer}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:2px solid var(--ink);border-radius:10px;overflow:hidden}
+.seg button{border:0;border-radius:0;min-height:46px;padding:0 6px}
+.seg button+button{border-left:2px solid var(--ink)}
+.seg button[aria-checked=true]{background:var(--ink);color:var(--bg)}
+form.add .grab,.sheetbox .grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:-4px auto 2px}
+body.sheet{overflow:hidden}
+#updBar{position:sticky;top:0;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px max(5vw,16px);background:var(--ink);color:var(--bg);font-weight:600}
+#updBar[hidden]{display:none}
+#updBar button{border-color:var(--bg);color:var(--bg);min-height:40px;flex:none}
+#toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);border-radius:10px;padding:8px 8px 8px 16px;display:flex;gap:12px;align-items:center;z-index:10;max-width:92vw;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#toast[hidden]{display:none}
+#toast button{border-color:var(--bg);color:var(--bg);min-height:40px}
+@media(prefers-reduced-motion:no-preference){.label{transition:transform .15s}.label.flash{transform:scale(1.015)}}
+</style>
+<script>(function(){try{var d=document.documentElement;window.__origTheme=d.getAttribute('data-theme');var t=JSON.parse(localStorage.getItem('sc-theme')||'null');if(!t||!/^#[0-9a-f]{6}$/i.test(t.accent))return;var n=parseInt(t.accent.slice(1),16),f=function(x){x/=255;return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4)};var L=.2126*f(n>>16&255)+.7152*f(n>>8&255)+.0722*f(n&255);d.style.setProperty('--y',t.accent);d.style.setProperty('--yk',L>.36?'#141414':'#ffffff');if(t.mode==='light'||t.mode==='dark')d.setAttribute('data-theme',t.mode)}catch(e){}})()</script>
+</head>
+<body>
+<header class="top">
+  <h1>Scancodes</h1>
+  <button type="button" class="gear" id="setBtn" aria-label="Instellingen: kleuren en weergave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</header>
+<div id="updBar" hidden role="status"><span id="updTxt">Nieuwe versie staat klaar</span><button type="button" id="updGo">Herstarten</button></div>
+
+<main class="wrap">
+  <section class="stage" aria-label="Gekozen code">
+    <div class="label" id="label"></div>
+    <div class="row">
+      <button class="nav" id="prevBtn" type="button" aria-label="Vorige code">‹</button>
+      <button class="pri grow" id="bigBtn" type="button">Groot scherm</button>
+      <button id="shareBtn" type="button" aria-label="Codes delen met een collega"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.3M8.3 13.2l7.4 4.3"/></svg><span class="t">Delen</span></button>
+      <button class="nav" id="nextBtn" type="button" aria-label="Volgende code">›</button>
+    </div>
+    <div class="std" id="std" aria-label="Standaardcodes"></div>
+    <div class="recent" id="recentBox" hidden>
+      <h2>Laatst gebruikt</h2>
+      <div class="chips" id="recent"></div>
+    </div>
+  </section>
+
+  <section class="side" aria-label="Codes">
+    <div class="bar">
+      <input id="q" type="search" placeholder="Zoek op naam of code" aria-label="Zoeken">
+      <button type="button" class="linkbtn" id="manualBtn" style="white-space:nowrap">Zelf invullen</button>
+    </div>
+
+    <form class="add" id="form" hidden novalidate role="dialog" aria-modal="true" aria-labelledby="formTitle">
+      <div class="grab" aria-hidden="true"></div>
+      <h2 id="formTitle">Code toevoegen</h2>
+      <div>
+        <label class="btn yel ph">Foto van de barcode maken<input id="fPhoto" type="file" accept="image/*" capture="environment" class="vh"></label>
+        <p style="margin:8px 0 0"><button type="button" class="linkbtn" id="recvOpen" style="padding:0">Bericht van een collega plakken</button></p>
+        <p class="hint" id="pMsg">Maak de foto recht van voren, met de naam die erbij staat in beeld. Of vul alles hieronder zelf in.</p>
+        <div class="chips" id="found"></div>
+        <img id="crop" alt="Uitsnede van je foto rond de barcode" hidden>
+        <div class="chips" id="names"></div>
+      </div>
+      <label class="f">Naam <span>Bijvoorbeeld "Keuken Jansen – zagen"</span><input id="fName" autocomplete="off" maxlength="60"></label>
+      <label class="f">Code <span>Komt uit de foto, of typ hem over van de werkbon</span><input id="fCode" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40"></label>
+      <div class="two">
+        <label class="f">Groep <span>Optioneel</span><input id="fGroup" list="groups" autocomplete="off" maxlength="30" placeholder="Project, Activiteit…"></label>
+        <label class="f">Type barcode <span>Laat staan als je het niet weet</span>
+          <select id="fSym"><option value="128">Code 128 (standaard)</option><option value="39">Code 39</option></select></label>
+      </div>
+      <p class="err" id="fErr" role="alert"></p>
+      <div class="row" style="margin-top:0">
+        <button class="pri" type="submit">Opslaan</button>
+        <button type="button" id="cancelBtn">Annuleren</button>
+        <button type="button" id="archBtnF" hidden>Klaar, archiveren</button>
+        <button type="button" class="del" id="delBtn" hidden>Verwijderen</button>
+      </div>
+    </form>
+    <datalist id="groups"></datalist>
+
+    <div class="chips" id="chips"></div>
+    <ul class="list" id="list"></ul>
+    <div><button type="button" class="linkbtn" id="archToggle" hidden></button></div>
+
+    <details>
+      <summary id="bkSum">Back-up en overzetten</summary>
+      <p><button type="button" class="linkbtn" id="termsBtn" style="padding:0">Voorwaarden lezen</button></p>
+      <p><b>Scant hij niet?</b> Zet je scherm op de hoogste helderheid, houd de scanner 10 tot 20 cm van het scherm en een beetje schuin. Werkt het nog steeds niet, kies dan bij de code het type Code 39.</p>
+      <p>Je codes staan alleen op dit toestel, in deze browser. Kopieer de lijst af en toe naar een notitie, zodat je hem kunt terugzetten of op een ander toestel kunt plakken.</p>
+      <div class="row" style="margin-top:0;margin-bottom:10px">
+        <button type="button" id="copyBtn">Lijst kopiëren</button>
+        <button type="button" id="importBtn">Geplakte lijst toevoegen</button>
+      </div>
+      <textarea id="io" aria-label="Lijst als tekst" spellcheck="false" placeholder="Plak hier een gekopieerde lijst"></textarea>
+      <p id="apkOld" hidden><b>Nieuwe Android-app nodig voor de camera.</b> <a href="https://github.com/Limboflap/scancodes/raw/main/Scancodes.apk">Download de nieuwste Scancodes-app</a> en installeer hem over deze heen. Je codes blijven staan.</p>
+      <div id="upBox" hidden>
+        <h2 style="font-size:22px;margin:18px 0 6px">App-updates</h2>
+        <p id="upVer"></p>
+        <label class="f">Update-adres <span>Waar de nieuwste versie online staat</span><input id="upUrl" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://raw.githubusercontent.com/naam/scancodes/main/"></label>
+        <div class="row" style="margin-top:10px"><button type="button" id="upBtn">Nu op updates controleren</button></div>
+        <p class="hint" id="upMsg"></p>
+        <p class="hint" id="upLast"></p>
+      </div>
+    </details>
+  </section>
+</main>
+
+<div id="terms" hidden role="dialog" aria-modal="true" aria-labelledby="termsT">
+  <div class="tbox">
+    <h2 id="termsT">Voorwaarden</h2>
+    <p>Lees dit even voordat je Scancodes gebruikt.</p>
+    <ol>
+      <li><b>Gratis hulpmiddel van een particulier.</b> Scancodes is geen product van een bedrijf. Het is niet gemaakt door, en niet verbonden aan, One Two (de maker van de Action Tracker) of een werkgever.</li>
+      <li><b>Gebruik op eigen risico.</b> Je krijgt de app zoals hij is. Er is geen garantie dat hij foutloos werkt, altijd beschikbaar is of codes goed herkent.</li>
+      <li><b>Je urenregistratie blijft jouw verantwoordelijkheid.</b> Controleer of de juiste code is gescand en houd je aan de regels en afspraken van je werkgever. Gebruik de app alleen voor registraties die kloppen.</li>
+      <li><b>Geen aansprakelijkheid.</b> De maker is niet aansprakelijk voor schade door het gebruik van de app, zoals verkeerd geboekte uren, kwijtgeraakte codes of problemen met je telefoon, voor zover de wet dat toestaat.</li>
+      <li><b>Privacy.</b> Je codes staan alleen op je eigen telefoon en de maker ontvangt niets van je. Foto's worden op je telefoon gelezen. Voor updates en de tekstherkenner maakt de app verbinding met GitHub en jsDelivr; die zien je IP-adres. Alleen in de webversie binnen Claude gaat een smalle uitsnede van de foto naar Claude om de naam te lezen.</li>
+      <li><b>Geen verplichtingen.</b> De app kan zonder aankondiging veranderen of stoppen. Je hebt geen recht op hulp, updates of herstel.</li>
+      <li><b>Delen mag.</b> Je mag de app gebruiken en delen. De code valt onder de MIT-licentie (zie LICENSE op GitHub).</li>
+    </ol>
+    <p class="hint">Door op "Akkoord" te tikken ga je hiermee akkoord. Je kunt de voorwaarden altijd teruglezen onderaan de app.</p>
+    <div class="row"><button type="button" class="pri grow" id="termsOk">Akkoord</button></div>
+  </div>
+</div>
+<div id="scan" hidden role="dialog" aria-modal="true" aria-label="Barcode scannen">
+  <video id="scanVid" playsinline muted autoplay poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"></video>
+  <div class="aim" aria-hidden="true"></div>
+  <p id="scanMsg">Camera wordt gestart…</p>
+  <div class="scanbar">
+    <button type="button" id="scanTorch" hidden>Lamp aan</button>
+    <button type="button" id="scanRetry" hidden>Opnieuw proberen</button>
+    <label class="btn">Foto kiezen<input id="scanFile" type="file" accept="image/*" class="vh"></label>
+    <button type="button" class="pri" id="scanClose">Sluiten</button>
+  </div>
+</div>
+<div id="settings" class="sheetbox" hidden role="dialog" aria-modal="true" aria-labelledby="setT">
+  <div class="grab" aria-hidden="true"></div>
+  <h2 id="setT">Instellingen</h2>
+  <h3>Kleur</h3>
+  <div class="swatches" id="swatches" role="radiogroup" aria-label="Kleur van de app"></div>
+  <label class="f" style="margin-top:12px">Eigen kleur <span>Kies zelf een kleur</span><input type="color" id="accentPick" value="#f2b705"></label>
+  <h3>Weergave</h3>
+  <div class="seg" id="modeSeg" role="radiogroup" aria-label="Licht of donker">
+    <button type="button" data-mode="auto">Automatisch</button><button type="button" data-mode="light">Licht</button><button type="button" data-mode="dark">Donker</button>
+  </div>
+  <p class="hint">De barcode zelf blijft altijd zwart op wit, anders scant hij slechter.</p>
+  <div class="row">
+    <button type="button" id="setReset">Standaard herstellen</button>
+    <button type="button" class="pri grow" id="setClose">Klaar</button>
+  </div>
+</div>
+<div id="shareSheet" class="sheetbox" hidden role="dialog" aria-modal="true" aria-labelledby="shT">
+  <div class="grab" aria-hidden="true"></div>
+  <h2 id="shT">Delen met een collega</h2>
+  <p class="hint">Kies welke codes je wilt doorsturen. Je collega tikt op de link in het bericht, of plakt het bericht in zijn eigen Scancodes.</p>
+  <ul class="picks" id="shList"></ul>
+  <div class="row" style="margin-top:4px"><button type="button" class="linkbtn" id="shAll" style="padding:0">Alles aan</button><button type="button" class="linkbtn" id="shNone" style="padding:0">Alles uit</button></div>
+  <p class="msgprev" id="shPrev"></p>
+  <div class="row">
+    <button type="button" class="pri grow" id="shGo">Delen…</button>
+    <a class="btn" id="shWa" href="#" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;text-decoration:none">WhatsApp</a>
+    <button type="button" id="shCopy">Kopiëren</button>
+  </div>
+  <div class="row"><button type="button" id="shClose" class="grow">Sluiten</button></div>
+</div>
+<div id="recvSheet" class="sheetbox" hidden role="dialog" aria-modal="true" aria-labelledby="rvT">
+  <div class="grab" aria-hidden="true"></div>
+  <h2 id="rvT">Codes van een collega</h2>
+  <div id="rvPaste">
+    <p class="hint">Plak hier het hele bericht dat je kreeg (lang op het vak drukken → Plakken).</p>
+    <textarea id="rvText" spellcheck="false" aria-label="Bericht van collega"></textarea>
+    <p class="err" id="rvErr"></p>
+  </div>
+  <ul class="picks" id="rvList" hidden></ul>
+  <div class="row">
+    <button type="button" class="pri grow" id="rvGo">Bekijken</button>
+    <button type="button" id="rvClose">Annuleren</button>
+  </div>
+</div>
+<div id="sheetBg" hidden></div>
+<button type="button" id="addBtn" aria-label="Foto maken en code toevoegen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="t">Toevoegen</span></button>
+<input id="quickPhoto" type="file" accept="image/*" capture="environment" class="vh" aria-hidden="true" tabindex="-1">
+<div id="full" hidden role="dialog" aria-modal="true" aria-label="Code groot">
+  <div class="nm" id="fullName"></div>
+  <div class="bc" id="fullBc"></div>
+  <div class="codetxt" id="fullCode"></div>
+  <div class="row">
+    <button type="button" class="nav" id="fPrev" aria-label="Vorige code">‹</button>
+    <button type="button" class="pri" id="fClose">Sluiten</button>
+    <button type="button" class="nav" id="fNext" aria-label="Volgende code">›</button>
+  </div>
+</div>
+<div id="toast" hidden><span id="toastMsg"></span><button type="button" id="toastBtn" hidden>Ongedaan maken</button></div>
+
+<script>
+/* barcode decoder: Code 128 + Code 39, any of 4 orientations */
+const BC=(()=>{
+const P='212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 211214 211232'.split(' ').map(s=>[...s].map(Number));
+const STOP=[2,3,3,1,1,1,2];
+const C39={'000110100':'0','100100001':'1','001100001':'2','101100000':'3','000110001':'4','100110000':'5','001110000':'6','000100101':'7','100100100':'8','001100100':'9','100001001':'A','001001001':'B','101001000':'C','000011001':'D','100011000':'E','001011000':'F','000001101':'G','100001100':'H','001001100':'I','000011100':'J','100000011':'K','001000011':'L','101000010':'M','000010011':'N','100010010':'O','001010010':'P','000000111':'Q','100000110':'R','001000110':'S','000010110':'T','110000001':'U','011000001':'V','111000000':'W','010010001':'X','110010000':'Y','011010000':'Z','010000101':'-','110000100':'.','011000100':' ','010010100':'*','010101000':'$','010100010':'/','010001010':'+','000101010':'%'};
+function err(r,i,pat,mods){
+  let s=0;for(let k=0;k<pat.length;k++)s+=r[i+k];const u=s/mods;let e=0,g=0;
+  for(let k=0;k<pat.length;k++)e+=Math.abs(r[i+k]/u-pat[k]);
+  for(let k=0;k<pat.length-1;k++)g+=Math.abs((r[i+k]+r[i+k+1])/u-pat[k]-pat[k+1]);
+  return Math.min(e,g*0.9);
+}
+function best128(r,i,lo,hi){
+  let b=-1,be=9;for(let v=lo;v<=hi;v++){const e=err(r,i,P[v],11);if(e<be){be=e;b=v}}
+  return be<2.2?b:-1;
+}
+function d128(r){
+  if(r.length<20)return null;
+  const st=best128(r,0,103,105);if(st<0)return null;
+  const out=[st];
+  for(let i=6;i+6<=r.length;i+=6){
+    if(i+7<=r.length&&err(r,i,STOP,13)<2.4&&out.length>=3){
+      const v=out.slice(0,-1),c=out[out.length-1];let s=v[0];for(let k=1;k<v.length;k++)s+=v[k]*k;
+      if(s%103!==c)return null;
+      const t=txt128(v);return t?{text:t,end:i+7}:null;
+    }
+    const v=best128(r,i,0,102);if(v<0)return null;out.push(v);
+    if(out.length>60)return null;
+  }
+  return null;
+}
+function txt128(v){
+  let set=v[0]===103?'A':v[0]===104?'B':'C',t='',shift=false;
+  for(let k=1;k<v.length;k++){
+    const x=v[k],cs=shift?(set==='A'?'B':'A'):set;shift=false;
+    if(cs==='C'){if(x<100)t+=(x<10?'0':'')+x;else if(x===100)set='B';else if(x===101)set='A';continue}
+    if(x<96){t+=cs==='A'?String.fromCharCode(x<64?x+32:x-64):String.fromCharCode(x+32);continue}
+    if(x===98)shift=true;else if(x===99)set='C';else if(x===100&&cs==='A')set='B';else if(x===101&&cs==='B')set='A';
+  }
+  return t;
+}
+function ch39(r,i){
+  if(i+9>r.length)return null;const w=r.slice(i,i+9),s=[...w].sort((a,b)=>b-a);
+  if(s[2]<s[3]*1.5)return null;const t=(s[2]+s[3])/2;
+  return C39[w.map(x=>x>t?'1':'0').join('')]||null;
+}
+function d39(r){
+  if(ch39(r,0)!=='*')return null;let t='';
+  for(let i=10;i+9<=r.length;i+=10){
+    const c=ch39(r,i);if(!c)return null;
+    if(c==='*')return t.length?{text:t,end:i+9}:null;
+    t+=c;
+  }
+  return null;
+}
+function runsOf(dark,W){
+  const runs=[],pos=[];let c=1;
+  for(let x=1;x<=W;x++){if(x<W&&dark[x]===dark[x-1])c++;else{runs.push(c);pos.push(x-c);c=1}}
+  return {runs,pos,first:dark[0]};
+}
+function decodeRuns(R,found,y,rev,W){
+  const {runs,pos,first}=R;
+  for(let i=1;i<runs.length;i++){
+    const isBar=((i%2===0)?first:1-first)===1;if(!isBar)continue;
+    const sub=runs.slice(i,i+380);
+    if(runs[i-1]<2.5*Math.min(sub[0],sub[1]||99))continue;
+    let res=d128(sub),sym='128';if(!res){res=d39(sub);sym='39'}
+    if(res){
+      const e=i+res.end-1;let a=pos[i],b=pos[e]+runs[e];
+      if(rev){const a2=W-b,b2=W-a;a=a2;b=b2}
+      found.push({text:res.text,sym,x0:a,x1:b,y,rev});i=e;
+    }
+  }
+}
+function edgeRuns(p0,W,win){
+  const p=new Float32Array(W);for(let x=1;x<W-1;x++)p[x]=(p0[x-1]+2*p0[x]+p0[x+1])/4;p[0]=p0[0];p[W-1]=p0[W-1];
+  const d=new Float32Array(W);for(let x=1;x<W-1;x++)d[x]=p[x+1]-p[x-1];
+  // local contrast via block min/max
+  const B=Math.max(8,win),nb=Math.ceil(W/B),mn=new Float32Array(nb),mx=new Float32Array(nb);
+  for(let b=0;b<nb;b++){let a=1e9,c=-1e9;for(let x=b*B;x<Math.min(W,(b+1)*B);x++){if(p[x]<a)a=p[x];if(p[x]>c)c=p[x]}mn[b]=a;mx[b]=c}
+  const rng=x=>{const b=(x/B)|0;let a=mn[b],c=mx[b];if(b>0){a=Math.min(a,mn[b-1]);c=Math.max(c,mx[b-1])}if(b<nb-1){a=Math.min(a,mn[b+1]);c=Math.max(c,mx[b+1])}return c-a};
+  const E=[];
+  for(let x=2;x<W-2;x++){
+    const v=d[x],av=Math.abs(v);
+    if(av<Math.max(6,rng(x)*.12)||av<Math.abs(d[x-1])||av<=Math.abs(d[x+1]))continue;
+    const den=d[x-1]-2*v+d[x+1],off=den?(d[x-1]-d[x+1])/(2*den):0;
+    const e={x:x+Math.max(-.5,Math.min(.5,off)),s:v<0?-1:1,a:av};
+    const l=E[E.length-1];
+    if(l&&l.s===e.s){if(e.a>l.a)E[E.length-1]=e}else E.push(e);
+  }
+  while(E.length&&E[0].s>0)E.shift();
+  const runs=[],pos=[];let prev=0;
+  for(const e of E){runs.push(e.x-prev);pos.push(prev);prev=e.x}
+  runs.push(W-prev);pos.push(prev);
+  return {runs,pos,first:0};
+}
+function scanLine(row,W,win,found,y){
+  const pre=new Float64Array(W+1);for(let x=0;x<W;x++)pre[x+1]=pre[x]+row[x];
+  const dark=new Uint8Array(W);let any=false;
+  for(let x=0;x<W;x++){const a=Math.max(0,x-win),b=Math.min(W,x+win);const mean=(pre[b]-pre[a])/(b-a);dark[x]=row[x]<mean*0.82?1:0}
+  const R=runsOf(dark,W);decodeRuns(R,found,y,false,W);
+  const rd=dark.slice().reverse();decodeRuns(runsOf(rd,W),found,y,true,W);
+  decodeRuns(edgeRuns(row,W,win),found,y,false,W);
+  const rr=row.slice().reverse();decodeRuns(edgeRuns(rr,W,win),found,y,true,W);
+  if(SHARP){const sh=sharpen(row,W);decodeRuns(edgeRuns(sh,W,win),found,y,false,W);decodeRuns(edgeRuns(sh.slice().reverse(),W,win),found,y,true,W)}
+}
+let SHARP=false;
+function sharpen(r,W){
+  const k=[1,4,7,4,1],o=new Float32Array(W);
+  for(let x=0;x<W;x++){let s=0,t=0;for(let j=-2;j<=2;j++){const q=x+j;if(q>=0&&q<W){s+=r[q]*k[j+2];t+=k[j+2]}}o[x]=r[x]+2*(r[x]-s/t)}
+  return o;
+}
+function grayOf(cv){
+  const W=cv.width,H=cv.height,d=cv.getContext('2d',{willReadFrequently:true}).getImageData(0,0,W,H).data;
+  const g=new Float32Array(W*H);for(let i=0;i<W*H;i++)g[i]=Math.min(d[i*4],d[i*4+1],d[i*4+2])*.5+(d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11)*.5;
+  return g;
+}
+let FAST=false;
+function scanCanvas(cv,rot,hits){
+  const W=cv.width,H=cv.height,g=grayOf(cv),step=Math.max(2,Math.round(H/(FAST?140:400))),row=new Float32Array(W);
+  for(const win of (FAST?[Math.round(W/24)]:[Math.round(W/30),Math.round(W/12)]))
+  for(let y=0;y<H;y+=step){
+    for(let x=0;x<W;x++)row[x]=g[y*W+x];
+    const f=[];scanLine(row,W,win,f,y);
+    for(const h0 of f){
+      const k=h0.sym+'|'+h0.text,h=hits[k]||(hits[k]={text:h0.text,sym:h0.sym,n:0,rots:{}});
+      h.n++;const rk=rot+(h0.rev?180:0);const b=h.rots[rk]||(h.rots[rk]={n:0,x0:1e9,x1:0,y0:1e9,y1:0});
+      b.n++;b.x0=Math.min(b.x0,h0.x0);b.x1=Math.max(b.x1,h0.x1);b.y0=Math.min(b.y0,y);b.y1=Math.max(b.y1,y);
+    }
+  }
+}
+function rotated(src,deg){
+  const c=document.createElement('canvas');const sw=src.width,sh=src.height;
+  if(deg%180){c.width=sh;c.height=sw}else{c.width=sw;c.height=sh}
+  const cx=c.getContext('2d');cx.translate(c.width/2,c.height/2);cx.rotate(deg*Math.PI/180);cx.drawImage(src,-sw/2,-sh/2);return c;
+}
+async function loadImg(file){
+  try{const b=await createImageBitmap(file);return {src:b,w:b.width,h:b.height}}catch(e){}
+  const url=URL.createObjectURL(file);
+  try{
+    const img=new Image();img.src=url;
+    if(img.decode)await img.decode();else await new Promise((ok,no)=>{img.onload=ok;img.onerror=()=>no(new Error('afbeelding niet te openen'))});
+    return {src:img,w:img.naturalWidth,h:img.naturalHeight};
+  }catch(e){throw new Error('dit fotoformaat wordt niet ondersteund')}
+  finally{setTimeout(()=>URL.revokeObjectURL(url),30000)}
+}
+async function decode(file){
+  const im=await loadImg(file);
+  let r=await pass(im,2000,false);
+  if(!r.list.length&&Math.max(im.w,im.h)>2000)r=await pass(im,3200,false);
+  if(!r.list.length)r=await pass(im,3200,true);
+  return r;
+}
+async function pass(im,max,sharp,fast){
+  SHARP=sharp;FAST=!!fast;const bmp=im.src;
+  const sc=Math.min(1,max/Math.max(im.w,im.h));
+  const W=Math.round(im.w*sc),H=Math.round(im.h*sc);
+  const base=document.createElement('canvas');base.width=W;base.height=H;
+  base.getContext('2d').drawImage(bmp,0,0,W,H);
+  const canv={0:base,90:rotated(base,90)};
+  const hits={};
+  scanCanvas(canv[0],0,hits);scanCanvas(canv[90],90,hits);
+  const list=Object.values(hits).filter(h=>h.n>=(FAST?2:3)).sort((a,b)=>b.n-a.n).map(h=>{
+    const rk=+Object.keys(h.rots).sort((a,b)=>h.rots[b].n-h.rots[a].n)[0];const b=h.rots[rk];
+    return {text:h.text,sym:h.sym,n:h.n,rot:rk%180,flip:rk>=180,x0:b.x0,x1:b.x1,y0:b.y0,y1:b.y1};
+  });
+  return {list,canv};
+}
+async function decodeCanvas(cv){
+  const im={src:cv,w:cv.width,h:cv.height};
+  let r=await pass(im,2000,false);if(!r.list.length)r=await pass(im,2000,true);return r;
+}
+function quick(cv,max){return pass({src:cv,w:cv.width,h:cv.height},max||1100,false,true)}
+return {decode,decodeCanvas,quick,rotated};
+})();
+</script>
+<script>
+{
+const KEY='scancodes-v1';
+const P='212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 211214 211232'.split(' ');
+const C39={'0':'000110100','1':'100100001','2':'001100001','3':'101100000','4':'000110001','5':'100110000','6':'001110000','7':'000100101','8':'100100100','9':'001100100','A':'100001001','B':'001001001','C':'101001000','D':'000011001','E':'100011000','F':'001011000','G':'000001101','H':'100001100','I':'001001100','J':'000011100','K':'100000011','L':'001000011','M':'101000010','N':'000010011','O':'100010010','P':'001010010','Q':'000000111','R':'100000110','S':'001000110','T':'000010110','U':'110000001','V':'011000001','W':'111000000','X':'010010001','Y':'110010000','Z':'011010000','-':'010000101','.':'110000100',' ':'011000100','*':'010010100','$':'010101000','/':'010100010','+':'010001010','%':'000101010'};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let items=load(),sel=null,q='',grp='',editId=null,lastDel=null,toastT=null,showArch=false;
+const SEED=[{name:'Stop',code:'/Z000001',sym:'39'},{name:'Werkplaats',code:'A3204',sym:'128'},{name:'Overwerk',code:'A9609399',sym:'128'}];
+(function seed(){
+  let done=false;try{done=localStorage.getItem(KEY+'-seed')==='1'}catch(e){}
+  if(done)return;
+  for(const s of SEED)if(!items.some(i=>i.code===s.code&&i.sym===s.sym))items.push({id:'std'+s.code.replace(/\W/g,''),name:s.name,code:s.code,group:'Standaard',sym:s.sym,pin:true,used:0,n:0});
+  save();try{localStorage.setItem(KEY+'-seed','1')}catch(e){}
+})();
+sel=items.length?([...items].sort((a,b)=>(b.used||0)-(a.used||0))[0].id):null;
+
+function str(v,n){return typeof v==='string'?v.slice(0,n):''}
+function clean(x,i){
+  if(!x||typeof x!=='object'||typeof x.code!=='string')return null;
+  const sym=x.sym==='39'?'39':'128',code=x.code.trim();if(check(code,sym))return null;
+  return {id:(typeof x.id==='string'&&/^[\w-]{1,40}$/.test(x.id))?x.id:'r'+Date.now().toString(36)+i+Math.random().toString(36).slice(2,6),
+    name:str(x.name,60)||code,code:sym==='39'?code.toUpperCase():code,group:str(x.group,30),sym,pin:x.pin===true,
+    used:Number.isFinite(x.used)?x.used:0,n:Number.isFinite(x.n)?x.n:0,arch:x.arch===true};
+}
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY));return Array.isArray(v)?v.map(clean).filter(Boolean):[]}catch(e){return[]}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(items))}catch(e){toast('Opslaan lukt niet in deze browser. Maak een back-up via onderaan.')}}
+
+function w128(t){
+  let v;
+  if(/^\d+$/.test(t)&&t.length>=4&&t.length%2===0){v=[105];for(let i=0;i<t.length;i+=2)v.push(+t.slice(i,i+2))}
+  else{v=[104];for(const ch of t)v.push(ch.charCodeAt(0)-32)}
+  let s=v[0];for(let i=1;i<v.length;i++)s+=v[i]*i;
+  v.push(s%103);
+  return v.map(x=>P[x]).join('')+'2331112';
+}
+function w39(t){
+  let o='';for(const ch of '*'+t.toUpperCase()+'*')o+=C39[ch].replace(/./g,b=>b==='1'?'3':'1')+'1';
+  return o.slice(0,-1);
+}
+function svg(code,sym){
+  const w=sym==='39'?w39(code):w128(code),qz=11;let x=qz,r='';
+  for(let i=0;i<w.length;i++){const n=+w[i];if(i%2===0)r+='<rect x="'+x+'" y="0" width="'+n+'" height="60"/>';x+=n}
+  const tot=x+qz;
+  return '<svg viewBox="0 0 '+tot+' 60" preserveAspectRatio="none" shape-rendering="crispEdges" role="img" aria-label="Barcode '+esc(code)+'"><rect width="'+tot+'" height="60" fill="#fff"/><g fill="#000">'+r+'</g></svg>';
+}
+function check(code,sym){
+  if(!code)return 'Vul een code in.';
+  if(sym==='39'&&!/^[0-9A-Za-z\-. $\/+%]+$/.test(code))return 'Code 39 kan alleen cijfers, letters en - . spatie $ / + % aan. Kies Code 128.';
+  if(!/^[\x20-\x7e]+$/.test(code))return 'Gebruik alleen gewone letters, cijfers en tekens (geen é, ë, € enz.).';
+  return '';
+}
+const cur=()=>items.find(i=>i.id===sel)||null;
+function view(){
+  const s=q.trim().toLowerCase();
+  return items.filter(i=>(!i.arch||showArch||s)&&(!grp||i.group===grp)&&(!s||(i.name+' '+i.code+' '+(i.group||'')).toLowerCase().includes(s)))
+    .sort((a,b)=>(!!a.arch-!!b.arch)||(!!b.pin-!!a.pin)||a.name.localeCompare(b.name,'nl',{numeric:true}));
+}
+function render(){
+  const c=cur(),L=$('label');
+  L.innerHTML=c
+    ?'<div class="hd"><div class="nm">'+esc(c.name)+'</div><div class="sub">'+esc(c.group||'Zonder groep')+(c.arch?' · archief':'')+'</div></div><div class="bc">'+svg(c.code,c.sym)+'</div><div class="codetxt">'+esc(c.sym==='39'?c.code.toUpperCase():c.code)+'</div><div class="zoom">Tik op de code voor groot scherm</div>'
+    :'<div class="empty"><b>'+(items.length?'Kies een code':'Nog geen codes')+'</b>'+(items.length?'Tik hieronder op een code om hem hier te tonen.':'Tik rechtsonder op "Toevoegen" en maak een foto van de barcode op je werkbon. De code komt er dan meteen in. Daarna staat hij hier klaar om te scannen.')+'</div>';
+  ['bigBtn','prevBtn','nextBtn'].forEach(id=>$(id).disabled=!c);
+  const ORD=['stop','overwerk','werkplaats'],rk=i=>{const k=ORD.indexOf(i.name.toLowerCase());return k<0?9:k};
+  const std=items.filter(i=>i.group==='Standaard'&&!i.arch).sort((a,b)=>rk(a)-rk(b)||a.name.localeCompare(b.name,'nl'));
+  $('std').innerHTML=std.map(i=>'<button type="button" class="btn" data-id="'+esc(i.id)+'" aria-pressed="'+(i.id===sel)+'">'+esc(i.name)+'</button>').join('');
+  const rec=items.filter(i=>i.used&&!i.arch&&i.group!=='Standaard').sort((a,b)=>b.used-a.used).slice(0,8);
+  $('recentBox').hidden=!rec.length;
+  $('recent').innerHTML=rec.map(i=>'<button type="button" class="btn chip" data-id="'+esc(i.id)+'" aria-pressed="'+(i.id===sel)+'">'+esc(i.name)+'</button>').join('');
+  const gs=[...new Set(items.filter(i=>!i.arch||showArch).map(i=>i.group).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'nl'));
+  if(grp&&!gs.includes(grp))grp='';
+  $('chips').innerHTML=gs.length?['',...gs].map(g=>'<button type="button" class="btn chip" data-g="'+esc(g)+'" aria-pressed="'+(g===grp)+'">'+(g?esc(g):'Alles')+'</button>').join(''):'';
+  $('groups').innerHTML=gs.map(g=>'<option value="'+esc(g)+'">').join('');
+  const v=view();
+  $('list').innerHTML=v.length?v.map(i=>'<li class="'+(i.id===sel?'on ':'')+(i.arch?'arch':'')+'"><button type="button" class="pick" data-id="'+esc(i.id)+'"><span class="nm">'+esc(i.name)+(i.arch?'<span class="tag">archief</span>':'')+'</span><small>'+(i.group?esc(i.group)+' · ':'')+esc(i.code)+'</small></button>'+(i.arch?'<button type="button" class="ic" data-unarch="'+esc(i.id)+'" aria-label="Terugzetten uit archief">↩</button>':'<button type="button" class="ic'+(i.pin?' pin':'')+'" data-pin="'+esc(i.id)+'" aria-label="'+(i.pin?'Losmaken':'Bovenaan vastzetten')+'" aria-pressed="'+!!i.pin+'">'+(i.pin?'★':'☆')+'</button>')+'<button type="button" class="ic" data-edit="'+esc(i.id)+'" aria-label="Wijzigen">✎</button></li>').join('')
+    :'<li class="none">'+(items.length?'Niets gevonden voor deze zoekopdracht.':'Je lijst is nog leeg.')+'</li>';
+  const na=items.filter(i=>i.arch).length;if(!na)showArch=false;
+  $('archToggle').hidden=!na;$('archToggle').textContent=showArch?'Archief verbergen':'Archief tonen ('+na+')';
+  if(!$('full').hidden)renderFull();
+}
+function select(id){
+  const it=items.find(i=>i.id===id);if(!it)return;
+  sel=id;it.used=Date.now();it.n=(it.n||0)+1;save();render();
+  const L=$('label');L.classList.add('flash');setTimeout(()=>L.classList.remove('flash'),160);
+}
+function nav(d){
+  const v=view();if(!v.length)return;
+  let i=v.findIndex(x=>x.id===sel);i=i<0?0:(i+d+v.length)%v.length;select(v[i].id);
+}
+function renderFull(){
+  const c=cur();if(!c){closeFull();return}
+  $('fullName').textContent=c.name;
+  $('fullBc').innerHTML=svg(c.code,c.sym);
+  $('fullCode').textContent=c.sym==='39'?c.code.toUpperCase():c.code;
+}
+function openFull(){
+  if(!cur())return;$('full').hidden=false;renderFull();$('fClose').focus();
+  try{const p=$('full').requestFullscreen&&$('full').requestFullscreen();if(p&&p.catch)p.catch(()=>{})}catch(e){}
+}
+function closeFull(){
+  $('full').hidden=true;
+  try{if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch(e){}
+}
+function openForm(id){
+  editId=id||null;const it=id?items.find(i=>i.id===id):null;
+  $('formTitle').textContent=it?'Code wijzigen':'Code toevoegen';
+  $('fName').value=it?it.name:'';$('fCode').value=it?it.code:'';$('fGroup').value=it?(it.group||''):(grp||'');$('fSym').value=it?it.sym:'128';
+  $('fErr').textContent='';resetPhoto();$('sheetBg').hidden=false;$('addBtn').hidden=true;document.body.classList.add('sheet');$('form').scrollTop=0;$('delBtn').hidden=!it;$('archBtnF').hidden=!it;$('archBtnF').textContent=it&&it.arch?'Terugzetten uit archief':'Klaar, archiveren';$('form').hidden=false;if(it)$('fName').focus();
+}
+function closeForm(){$('form').hidden=true;editId=null;$('sheetBg').hidden=true;$('addBtn').hidden=false;document.body.classList.remove('sheet')}
+$('sheetBg').addEventListener('click',()=>closeForm());
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('form').hidden)closeForm()});
+let toastFn=null;
+function toast(msg,label,fn,ms){
+  toastFn=fn||null;$('toastMsg').textContent=msg;$('toastBtn').textContent=label||'';$('toastBtn').hidden=!label;$('toast').hidden=false;
+  clearTimeout(toastT);toastT=setTimeout(()=>{$('toast').hidden=true},ms||(label?6000:3500));
+}
+
+$('form').addEventListener('submit',e=>{
+  e.preventDefault();
+  const sym=$('fSym').value,code=$('fCode').value.trim(),name=$('fName').value.trim(),group=$('fGroup').value.trim();
+  if(!name){$('fErr').textContent='Vul een naam in, zodat je de code terugvindt.';$('fName').focus();return}
+  const er=check(code,sym);if(er){$('fErr').textContent=er;$('fCode').focus();return}
+  const val=sym==='39'?code.toUpperCase():code;
+  if(editId){Object.assign(items.find(i=>i.id===editId),{name,code:val,group,sym});sel=editId}
+  else{const it={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,code:val,group,sym,pin:false,used:0,n:0};items.push(it);sel=it.id}
+  save();closeForm();select(sel);toast('Opgeslagen');
+});
+const camOK=()=>{try{return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)&&window.top===window}catch(e){return false}};
+$('addBtn').addEventListener('click',()=>{if(camOK())openScanner();else $('quickPhoto').click()});
+let scanStream=null,scanOn=false,torchOn=false;
+const sleep=ms=>new Promise(ok=>setTimeout(ok,ms));
+async function getCam(){
+  // eerst de beste instellingen, daarna steeds eenvoudiger: sommige telefoons weigeren te strenge eisen
+  const tries=[
+    {video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false},
+    {video:{facingMode:{ideal:'environment'}},audio:false},
+    {video:true,audio:false}];
+  let last;
+  for(const c of tries){try{return await navigator.mediaDevices.getUserMedia(c)}catch(e){last=e;if(e&&(e.name==='NotAllowedError'||e.name==='SecurityError'))break}}
+  throw last;
+}
+function camError(err){
+  const n=err&&err.name||'',en=' (melding: '+String(n||err&&err.message||'onbekend').slice(0,40)+')';
+  let m;
+  if(IN_APP&&!window.SC_APK)m='Deze Android-app is te oud voor de camera. Installeer de nieuwste versie via de link onderaan de app, of kies hieronder een foto.';
+  else if(n==='NotAllowedError'||n==='SecurityError')m=IN_APP?'Geen toestemming voor de camera. Zet bij Instellingen → Apps → Scancodes → Toestemmingen de camera aan, of kies hieronder een foto.':'Geen toestemming voor de camera. Sta de camera toe in je browser, of kies hieronder een foto.';
+  else if(n==='NotReadableError'||n==='AbortError')m='De camera is bezig in een andere app. Sluit die app en probeer opnieuw, of kies hieronder een foto.';
+  else if(n==='NotFoundError'||n==='OverconstrainedError')m='Geen bruikbare camera gevonden. Kies hieronder een foto.';
+  else if(n==='GeenBeeld')m='De camera geeft geen beeld. Probeer opnieuw of kies hieronder een foto.';
+  else m='De camera start niet. Probeer opnieuw of kies hieronder een foto.';
+  $('scanMsg').textContent=m+en;$('scanRetry').hidden=false;
+}
+async function openScanner(){
+  $('scan').hidden=false;$('scanTorch').hidden=true;$('scanRetry').hidden=true;$('scanMsg').textContent='Camera wordt gestart…';
+  try{scanStream=await getCam()}catch(err){camError(err);return}
+  if($('scan').hidden){stopStream();return}
+  const v=$('scanVid');v.srcObject=scanStream;
+  const myStream=scanStream;setTimeout(()=>{if(scanStream===myStream&&!$('scan').hidden&&!v.videoWidth){stopStream();scanOn=false;camError({name:'GeenBeeld',message:'geen beeld'})}},5000);
+  try{await Promise.race([v.play(),sleep(1500)])}catch(e){}
+  try{const t=scanStream.getVideoTracks()[0],cap=t.getCapabilities&&t.getCapabilities();if(cap&&cap.torch){torchOn=false;$('scanTorch').textContent='Lamp aan';$('scanTorch').hidden=false}}catch(e){}
+  $('scanMsg').textContent='Houd de barcode in het gele kader';
+  scanOn=true;scanLoop();
+}
+async function scanLoop(){
+  const v=$('scanVid'),c=document.createElement('canvas'),mid=document.createElement('canvas');let k=0;
+  const t0=Date.now();let hinted=false;
+  while(scanOn){
+    await sleep(100);
+    if(!scanOn)return;if(!v.videoWidth)continue;
+    c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);
+    // om en om: het midden op volle scherpte, en het hele beeld verkleind
+    const useMid=(k++%2)===0;
+    if(useMid){const W=c.width,H=c.height,cw=Math.round(W*.9),ch=Math.round(H*.5);mid.width=cw;mid.height=ch;mid.getContext('2d').drawImage(c,(W-cw)/2,(H-ch)/2,cw,ch,0,0,cw,ch)}
+    let r;try{r=await BC.quick(useMid?mid:c,useMid?1600:1100)}catch(e){continue}
+    if(!scanOn)return;
+    if(!r.list.length){if(!hinted&&Date.now()-t0>6000){hinted=true;$('scanMsg').textContent='Kom dichterbij: de barcode moet het gele kader bijna vullen'}continue}
+    $('scanMsg').textContent='Barcode gezien, even stilhouden…';
+    const full=document.createElement('canvas');full.width=c.width;full.height=c.height;full.getContext('2d').drawImage(c,0,0);
+    let rr;try{rr=await BC.decodeCanvas(full);if(!rr.list.length&&useMid){const m2=document.createElement('canvas');m2.width=mid.width;m2.height=mid.height;m2.getContext('2d').drawImage(mid,0,0);rr=await BC.decodeCanvas(m2)}}catch(e){continue}
+    if(!scanOn)return;
+    if(!rr.list.length)continue;
+    try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}
+    closeScanner();quickAddResult(rr);return;
+  }
+}
+function stopStream(){if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}}
+function closeScanner(){scanOn=false;stopStream();$('scanVid').srcObject=null;$('scan').hidden=true}
+$('scanClose').addEventListener('click',closeScanner);
+$('scanRetry').addEventListener('click',()=>{stopStream();scanOn=false;openScanner()});
+$('scanTorch').addEventListener('click',async()=>{
+  try{const t=scanStream&&scanStream.getVideoTracks()[0];if(!t)return;torchOn=!torchOn;await t.applyConstraints({advanced:[{torch:torchOn}]});$('scanTorch').textContent=torchOn?'Lamp uit':'Lamp aan'}catch(e){$('scanTorch').hidden=true}
+});
+$('scanFile').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';closeScanner();if(f)quickAdd(f)});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&!$('scan').hidden)closeScanner()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('scan').hidden)closeScanner()});
+$('manualBtn').addEventListener('click',()=>openForm());
+$('cancelBtn').addEventListener('click',closeForm);
+$('delBtn').addEventListener('click',()=>{
+  const idx=items.findIndex(i=>i.id===editId);if(idx<0)return;
+  lastDel={it:items[idx],idx};items.splice(idx,1);if(sel===lastDel.it.id)sel=null;
+  save();closeForm();render();toast('"'+lastDel.it.name+'" verwijderd','Ongedaan maken',undoDel);
+});
+function setArch(id,on){
+  const it=items.find(i=>i.id===id);if(!it)return;
+  it.arch=on;if(on){it.pin=false;if(sel===id)sel=null}
+  save();render();
+  toast(on?'"'+it.name+'" gearchiveerd':'"'+it.name+'" staat weer in je lijst',on?'Ongedaan maken':'',on?()=>setArch(id,false):null);
+}
+$('archBtnF').addEventListener('click',()=>{const id=editId,it=items.find(i=>i.id===id);if(!it)return;closeForm();setArch(id,!it.arch)});
+$('archToggle').addEventListener('click',()=>{showArch=!showArch;render()});
+$('label').addEventListener('click',()=>{if(cur())openFull()});
+function undoDel(){if(!lastDel)return;items.splice(lastDel.idx,0,lastDel.it);sel=lastDel.it.id;lastDel=null;save();render()}
+$('toastBtn').addEventListener('click',()=>{const f=toastFn;$('toast').hidden=true;toastFn=null;if(f)f()});
+$('q').addEventListener('input',e=>{q=e.target.value;render()});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.id){select(b.dataset.id);if(b.classList.contains('pick')&&innerWidth<900)document.querySelector('.stage').scrollIntoView({behavior:'smooth',block:'start'})}
+  else if(b.dataset.pin){const it=items.find(i=>i.id===b.dataset.pin);it.pin=!it.pin;save();render()}
+  else if(b.dataset.edit){openForm(b.dataset.edit)}
+  else if(b.dataset.unarch){setArch(b.dataset.unarch,false)}
+  else if('g' in b.dataset){grp=b.dataset.g;render()}
+});
+$('bigBtn').addEventListener('click',openFull);
+$('prevBtn').addEventListener('click',()=>nav(-1));
+$('nextBtn').addEventListener('click',()=>nav(1));
+$('fPrev').addEventListener('click',()=>nav(-1));
+$('fNext').addEventListener('click',()=>nav(1));
+$('fClose').addEventListener('click',closeFull);
+document.addEventListener('keydown',e=>{
+  if($('full').hidden)return;
+  if(e.key==='Escape')closeFull();else if(e.key==='ArrowLeft')nav(-1);else if(e.key==='ArrowRight')nav(1);
+});
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&!$('full').hidden)$('full').hidden=true});
+
+let tw=null,shot=null,autoName=false;
+function loadScript(src){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+const timeout=(p,ms)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),ms))]);
+const TJS='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/';
+async function getWorker(){
+  if(tw)return tw;
+  if(!window.Tesseract)await loadScript(TJS+'tesseract.min.js');
+  const base={workerPath:TJS+'worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5'};
+  try{tw=await Tesseract.createWorker('nld',1,base)}
+  catch(e){tw=await Tesseract.createWorker('nld',1,Object.assign({},base,{cacheMethod:'none'}))}
+  return tw;
+}
+async function ocrLines(cv){
+  const w=await getWorker();const r=await w.recognize(cv);const d=(r&&r.data)||{};
+  if(Array.isArray(d.lines)&&d.lines.length)return d.lines.filter(l=>!(typeof l.confidence==='number'&&l.confidence<55)).map(l=>({t:l.text||'',y:l.bbox?(l.bbox.y0+l.bbox.y1)/2:null}));
+  return String(d.text||'').split('\n').map(t=>({t,y:null}));
+}
+function resetPhoto(){shot=null;autoName=false;$('found').innerHTML='';$('names').innerHTML='';$('crop').hidden=true;$('pMsg').textContent='Maak de foto recht van voren, met de naam die erbij staat in beeld. Of vul alles hieronder zelf in.'}
+function band(h,mask){
+  // strip across the whole page at the height of the barcode, turned upright
+  const src=shot.canv[h.rot],W=src.width,H=src.height,bh=Math.max(30,h.y1-h.y0);
+  const y0=Math.max(0,h.y0-bh*1.3-40),y1=Math.min(H,h.y1+bh*1.3+20);
+  const c=document.createElement('canvas');c.width=W;c.height=Math.round(y1-y0);
+  const cx=c.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,c.width,c.height);
+  if(h.flip){cx.translate(W,c.height);cx.rotate(Math.PI)}
+  cx.drawImage(src,0,y0,W,y1-y0,0,0,W,y1-y0);
+  if(mask)cx.fillRect(h.x0-8,h.y0-y0-6,h.x1-h.x0+16,h.y1-h.y0+12);
+  // barcode box in the upright strip
+  let top=h.y0-y0;if(h.flip)top=c.height-(h.y1-y0);
+  return {c,top,bh,x0:h.flip?W-h.x1:h.x0,x1:h.flip?W-h.x0:h.x1};
+}
+function strip(h){
+  // alleen een smalle strook rond de barcode: de rest van de werkbon blijft buiten beeld
+  const b=band(h,false),w=b.x1-b.x0;
+  const x0=Math.max(0,b.x0-w*2.2),x1=Math.min(b.c.width,b.x1+w*.4);
+  const p=document.createElement('canvas');p.width=Math.round(x1-x0);p.height=b.c.height;
+  p.getContext('2d').drawImage(b.c,x0,0,x1-x0,b.c.height,0,0,x1-x0,b.c.height);
+  return p;
+}
+function preview(h){return strip(h).toDataURL('image/jpeg',.85)}
+function nameStrip(h){
+  // voor Claude: alleen de regel(s) waar de naam staat, boven en naast de bovenkant van de barcode
+  const b=band(h,false),y0=Math.max(0,b.top-b.bh*1.0-30),y1=Math.min(b.c.height,b.top+b.bh*.45);
+  const p=document.createElement('canvas');p.width=b.c.width;p.height=Math.round(y1-y0);
+  p.getContext('2d').drawImage(b.c,0,y0,b.c.width,y1-y0,0,0,b.c.width,y1-y0);
+  return p;
+}
+const norm=s=>s.toUpperCase().replace(/O/g,'0').replace(/[^A-Z0-9]/g,'');
+function rank(lines,b,code){
+  const target=b.top+b.bh*.25,out=[];
+  lines.forEach((l,idx)=>{
+    let t=l.t.replace(/[|_~=<>{}\[\]«»"“”]+/g,' ').replace(/\s+/g,' ').trim();
+    const colonEnd=/:\s*$/.test(t);
+    if(/^(project|projectgegevens|projectnummer|projectleider|klant|omschrijving|machinebon|werkbon|algemeen|opmerkingen|goedkeuring)\s*:?$/i.test(t))return;
+    const m=t.match(/^([^:]{2,30}):\s*(.+)$/);
+    if(m&&(m[2].match(/[A-Za-zÀ-ÿ]/g)||[]).length>=3)t=m[2];
+    t=t.replace(/[:;.,\s]+$/,'').replace(/^[^A-Za-zÀ-ÿ0-9]+/,'').replace(/^(\S\s+)+/,'').trim();
+    const letters=(t.match(/[A-Za-zÀ-ÿ]/g)||[]).length;
+    if(letters<3||t.length>70||norm(t)===norm(code))return;
+    let s=l.y==null?idx*.5:Math.abs(l.y-target)/b.bh;
+    if(colonEnd)s-=.6;
+    if(/^(projectnummer|projectleider|pagina|datum|opmerkingen|goedkeuring)/i.test(l.t))s+=2;
+    if(letters<t.replace(/\s/g,'').length*.5)s+=1.5;
+    if(!out.some(o=>o.t===t))out.push({t,s});
+  });
+  return out.sort((a,b)=>a.s-b.s).slice(0,6).map(o=>o.t);
+}
+let samp=null;
+(async()=>{try{if(window.claude&&claude.use){const s=await claude.use('sample');if(s&&(await s.limits()).images)samp=s}}catch(e){}})();
+async function askName(h){
+  const s=nameStrip(h),sc=Math.min(1,1400/s.width),c=document.createElement('canvas');
+  c.width=Math.round(s.width*sc);c.height=Math.round(s.height*sc);c.getContext('2d').drawImage(s,0,0,c.width,c.height);
+  const blob=await new Promise(ok=>c.toBlob(ok,'image/jpeg',.85));
+  const prompt='Dit is een smalle uitsnede van een werkbon rond één streepjescode (code: '+h.text+').\n'+
+    'Geef de korte naam die bij deze streepjescode hoort: het label er direct boven (bijvoorbeeld "Stop:" wordt "Stop"), of de project- of opdrachtnaam op dezelfde regel ernaast. Neem de tekst letterlijk over zoals hij gedrukt staat, zonder dubbele punt aan het eind. Verzin niets: weet je het niet, laat de naam leeg.\n'+
+    'Antwoord alleen met JSON in deze vorm: {"name":""}';
+  let v;
+  try{v=await samp.json(prompt,{images:[blob],modelTier:'default'})}
+  catch(e){if(e&&e.code)throw e;const t=(await samp(prompt,{images:[blob],modelTier:'default'})).text||'';const m=t.match(/\{[\s\S]*\}/);if(!m)throw e;v=JSON.parse(m[0])}
+  const n=str(v&&v.name,70).trim().replace(/:$/,'');
+  return n?[n]:[];
+}
+async function readName(h){
+  if(samp)return await timeout(askName(h),60000);
+  const b=band(h,true);
+  return rank(await timeout(ocrLines(b.c),45000),b,h.text);
+}
+let quickBusy=false;
+async function quickAdd(f){
+  if(quickBusy)return;
+  toast('Foto wordt gelezen…','',null,90000);
+  let r;
+  try{r=await BC.decode(f)}catch(err){toast('De foto kon niet gelezen worden. Probeer het opnieuw.','Zelf invullen',()=>openForm());return}
+  return quickAddResult(r);
+}
+async function quickAddResult(r){
+  if(quickBusy)return;quickBusy=true;
+  try{
+    const known=x=>items.some(i=>i.code===x.text&&i.sym===x.sym)?1:0;r.list.sort((a,b)=>known(a)-known(b)||b.n-a.n);
+    if(!r.list.length){toast('Geen barcode gevonden. Maak de foto scherper en dichterbij.','Zelf invullen',()=>openForm(),8000);return}
+    const h=r.list[0],ex=items.find(i=>i.code===h.text&&i.sym===h.sym);
+    if(ex){select(ex.id);toast('"'+ex.name+'" staat al in je lijst');return}
+    // alleen de code invullen; de naam vult de gebruiker zelf in
+    $('toast').hidden=true;
+    openForm();shot=r;
+    if(r.list.length>1)$('found').innerHTML=r.list.slice(0,5).map(x=>'<button type="button" class="btn chip" data-code="'+esc(x.sym+'|'+x.text)+'">'+esc(x.text)+'</button>').join('');
+    pickHit(h);
+    setTimeout(()=>{try{$('fName').focus()}catch(e){}},60);
+  }finally{quickBusy=false}
+}
+$('quickPhoto').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(f)quickAdd(f)});
+async function pickHit(h){
+  $('fCode').value=h.text;$('fSym').value=h.sym;$('fErr').textContent='';
+  $('found').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.code===h.sym+'|'+h.text));
+  $('crop').src=h.fromText?shot.canv[0].toDataURL('image/jpeg',.7):preview(h);$('crop').hidden=false;$('names').innerHTML='';
+  const pre=h.fromText?'Code gelezen van de gedrukte tekst: '+h.text+' (controleer hem). ':'Code gevonden: '+h.text+'. ';
+  $('pMsg').textContent=pre+'Vul hieronder de naam in.';
+  const me=shot;
+  try{
+    const names=await readName(h);
+    if(me!==shot)return;
+    if(!names.length)throw new Error('none');
+    $('names').innerHTML='<span class="hint" style="align-self:center;margin:0">Voorstel:</span>'+names.slice(0,4).map(n=>'<button type="button" class="btn chip" data-name="'+esc(n)+'">'+esc(n)+'</button>').join('');
+  }catch(err){
+    // geen voorstel: niets aan de hand, de gebruiker typt de naam zelf
+  }
+}
+$('fPhoto').addEventListener('change',async e=>{
+  const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  resetPhoto();$('pMsg').textContent='Foto wordt gelezen…';
+  try{
+    const r=await BC.decode(f);shot=r;
+    const known=x=>items.some(i=>i.code===x.text&&i.sym===x.sym)?1:0;r.list.sort((a,b)=>known(a)-known(b)||b.n-a.n);
+    if(!r.list.length){$('pMsg').textContent='Geen barcode gevonden (versie '+APP_VERSION+'). Tik op het scherm om scherp te stellen, houd de telefoon stil en zorg dat de hele barcode groot in beeld is.';return}
+    if(r.list.length>1)$('found').innerHTML=r.list.slice(0,5).map(h=>'<button type="button" class="btn chip" data-code="'+esc(h.sym+'|'+h.text)+'">'+esc(h.text)+'</button>').join('');
+    pickHit(r.list[0]);
+  }catch(err){$('pMsg').textContent='De foto kon niet gelezen worden ('+String(err&&err.message||err).slice(0,60)+'). Probeer het opnieuw of typ de code over.'}
+});
+$('found').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!shot)return;const h=shot.list.find(x=>x.sym+'|'+x.text===b.dataset.code);if(h){autoName=autoName||!$('fName').value;pickHit(h)}});
+$('names').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$('fName').value=b.dataset.name;autoName=false});
+$('fName').addEventListener('input',()=>{autoName=false});
+
+$('copyBtn').addEventListener('click',()=>{
+  const txt=JSON.stringify(items.map(({name,code,group,sym,pin,arch})=>({name,code,group,sym,pin,arch})));
+  $('io').value=txt;
+  try{navigator.clipboard.writeText(txt).then(()=>toast('Lijst gekopieerd. Plak hem in een notitie.'),()=>{$('io').select();toast('Kopiëren mislukt. De lijst staat in het vak: selecteer en kopieer hem zelf.')})}
+  catch(e){$('io').select();toast('Selecteer de tekst in het vak en kopieer hem zelf.')}
+});
+$('importBtn').addEventListener('click',()=>{
+  let arr;try{arr=JSON.parse($('io').value)}catch(e){toast('Dit lijkt geen gekopieerde lijst.');return}
+  if(!Array.isArray(arr)){toast('Dit lijkt geen gekopieerde lijst.');return}
+  let n=0;
+  for(const x of arr){
+    const c=clean(x,n);if(!c)continue;
+    if(items.some(i=>i.code===c.code&&i.sym===c.sym))continue;
+    c.id='i'+Date.now().toString(36)+n+Math.random().toString(36).slice(2,6);c.used=0;c.n=0;items.push(c);n++;
+  }
+  save();render();toast(n?n+' code'+(n===1?'':'s')+' toegevoegd':'Geen nieuwe codes gevonden');
+});
+
+
+const APP_VERSION=26,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}};
+const DEFAULT_UPD='https://raw.githubusercontent.com/Limboflap/scancodes/main/';
+const updUrl=()=>{const v=lsGet('sc-update-url');return (v===null?DEFAULT_UPD:v).trim()};
+async function checkUpdate(manual){
+  const base=updUrl();
+  if(!base){if(manual)$('upMsg').textContent='Vul eerst een update-adres in.';return}
+  if(!/^https:\/\/[^\s/]+\//i.test(base+'/')){$('upMsg').textContent='Het update-adres moet met https:// beginnen.';return}
+  const u=base.endsWith('/')?base:base+'/';
+  if(manual)$('upMsg').textContent='Bezig met controleren…';
+  try{
+    const vr=await timeout(fetch(u+'version.json?t='+Date.now(),{cache:'no-store'}),15000);
+    if(!vr.ok)throw new Error('version.json '+vr.status);
+    const info=await vr.json(),nv=+info.version;
+    if(!(nv>APP_VERSION)){if(manual)$('upMsg').textContent='Je hebt de nieuwste versie ('+APP_VERSION+').';return}
+    const file=info.file||'app.html';if(!/^[\w.-]+\.html$/.test(file)||file.indexOf('..')>=0)throw new Error('ongeldige bestandsnaam');
+    const hr=await timeout(fetch(u+file+'?t='+Date.now(),{cache:'no-store'}),30000);
+    if(!hr.ok)throw new Error('app.html '+hr.status);
+    const html=await hr.text();
+    if(html.indexOf('<!DOCTYPE html>')!==0||html.indexOf('const APP_VERSION='+nv+',')<0)throw new Error('bestand klopt niet');
+    if(!lsSet('sc-app',JSON.stringify({v:nv,html})))throw new Error('opslaan mislukt');
+    $('upMsg').textContent='Versie '+nv+' is gedownload. Herstart de app om hem te gebruiken.';
+    showUpd(nv);
+  }catch(err){if(manual)$('upMsg').textContent='Controleren lukte niet: '+(err&&err.message||'geen verbinding')+'.'}
+}
+if(IN_APP){
+  $('upBox').hidden=false;if(!window.SC_APK)$('apkOld').hidden=false;$('bkSum').textContent='Back-up, overzetten en updates';
+  $('upVer').textContent='Je gebruikt versie '+APP_VERSION+(window.SC_APK?' (Android-app '+window.SC_APK+')':'')+'. De app kijkt bij het opstarten en daarna elke dag of er een nieuwe versie is.';
+  $('upUrl').value=updUrl();
+  $('upUrl').addEventListener('change',e=>{lsSet('sc-update-url',e.target.value.trim())});
+  $('upBtn').addEventListener('click',async()=>{lsSet('sc-update-url',$('upUrl').value.trim());lsSet('sc-last-check',String(Date.now()));await checkUpdate(true);$('upLast').textContent='Laatst gecontroleerd: '+lastTxt()+'.'});
+  $('upLast').textContent='Laatst gecontroleerd: '+lastTxt()+'.';
+  setTimeout(()=>autoCheck(true),2500);
+  try{const c=JSON.parse(lsGet('sc-app')||'null');if(c&&c.v>APP_VERSION)showUpd(c.v)}catch(e){}
+}
+// elke dag op updates controleren, ook als de app de hele dag openstaat
+const DAY=864e5;
+function lastTxt(){const t=+lsGet('sc-last-check')||0;if(!t)return 'nog niet';const d=new Date(t);return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+' om '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}
+function showUpd(v){$('updTxt').textContent='Nieuwe versie '+(v||'')+' staat klaar';$('updBar').hidden=false}
+$('updGo').addEventListener('click',()=>location.reload());
+async function autoCheck(force){
+  const last=+lsGet('sc-last-check')||0;
+  if(!force&&Date.now()-last<DAY)return;
+  lsSet('sc-last-check',String(Date.now()));
+  if(IN_APP){await checkUpdate(false);$('upLast').textContent='Laatst gecontroleerd: '+lastTxt()+'.'}
+  else{try{const r=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(r)await r.update()}catch(e){}}
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoCheck(false)});
+setInterval(()=>{if(!document.hidden)autoCheck(false)},36e5);
+if(!IN_APP&&navigator.serviceWorker&&location.protocol==='https:'){
+  let had=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)showUpd('');had=true});
+  setTimeout(()=>autoCheck(false),4000);
+}
+const COLORS=[['Geel','#f2b705'],['Oranje','#ef7d1a'],['Rood','#d23b2e'],['Roze','#d94f8c'],['Paars','#7b4fc4'],['Blauw','#2f6fd6'],['Turquoise','#119a9a'],['Groen','#2e9d5b'],['Grijs','#5f6b73']];
+const DEF_THEME={accent:'#f2b705',mode:'auto'};
+const ROOT=document.documentElement,ORIG_THEME=('__origTheme' in window)?window.__origTheme:ROOT.getAttribute('data-theme');
+function textOn(hex){const n=parseInt(hex.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;const L=x=>{x/=255;return x<=.03928?x/12.92:((x+.055)/1.055)**2.4};return (.2126*L(r)+.7152*L(g)+.0722*L(b))>.36?'#141414':'#ffffff'}
+function getTheme(){try{const t=JSON.parse(lsGet('sc-theme')||'null');if(t&&/^#[0-9a-f]{6}$/i.test(t.accent)&&['auto','light','dark'].includes(t.mode))return t}catch(e){}return Object.assign({},DEF_THEME)}
+function applyTheme(t){
+  ROOT.style.setProperty('--y',t.accent);ROOT.style.setProperty('--yk',textOn(t.accent));
+  if(t.mode==='auto'){if(ORIG_THEME)ROOT.setAttribute('data-theme',ORIG_THEME);else ROOT.removeAttribute('data-theme')}else ROOT.setAttribute('data-theme',t.mode);
+  const m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',t.accent);
+}
+function renderSettings(){
+  const t=getTheme();
+  $('swatches').innerHTML=COLORS.map(([n,c])=>'<button type="button" role="radio" aria-checked="'+(c===t.accent)+'" data-c="'+c+'" style="background:'+c+';--c-ink:'+textOn(c)+'">'+n+'</button>').join('');
+  $('accentPick').value=t.accent;
+  $('modeSeg').querySelectorAll('button').forEach(b=>b.setAttribute('aria-checked',b.dataset.mode===t.mode));
+}
+function setTheme(p){const t=Object.assign(getTheme(),p);lsSet('sc-theme',JSON.stringify(t));applyTheme(t);renderSettings()}
+function openSettings(){renderSettings();$('settings').hidden=false;$('sheetBg').hidden=false;$('addBtn').hidden=true;document.body.classList.add('sheet')}
+function closeSettings(){$('settings').hidden=true;$('sheetBg').hidden=true;$('addBtn').hidden=false;document.body.classList.remove('sheet')}
+$('setBtn').addEventListener('click',openSettings);
+$('setClose').addEventListener('click',closeSettings);
+$('sheetBg').addEventListener('click',()=>{if(!$('settings').hidden)closeSettings()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('settings').hidden)closeSettings()});
+$('swatches').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTheme({accent:b.dataset.c})});
+$('accentPick').addEventListener('input',e=>{if(/^#[0-9a-f]{6}$/i.test(e.target.value))setTheme({accent:e.target.value.toLowerCase()})});
+$('modeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTheme({mode:b.dataset.mode})});
+$('setReset').addEventListener('click',()=>{lsSet('sc-theme',JSON.stringify(DEF_THEME));applyTheme(DEF_THEME);renderSettings()});
+applyTheme(getTheme());
+
+// ---------- delen met een collega ----------
+const WEB_URL='https://limboflap.github.io/scancodes/';
+function b64e(s){const u=new TextEncoder().encode(s);let b='';u.forEach(x=>b+=String.fromCharCode(x));return btoa(b).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function b64d(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return new TextDecoder().decode(u)}
+function packCodes(list){return b64e(JSON.stringify(list.map(i=>[i.name,i.code,i.sym,i.group||''])))}
+function unpackText(t){
+  const m=String(t).match(/(?:#sc=|SC1:)([A-Za-z0-9_-]{8,})/);if(!m)return null;
+  let arr;try{arr=JSON.parse(b64d(m[1]))}catch(e){return null}
+  if(!Array.isArray(arr))return null;
+  return arr.slice(0,200).map((a,i)=>Array.isArray(a)?clean({name:a[0],code:a[1],sym:a[2],group:a[3]},i):null).filter(Boolean);
+}
+function shareChosen(){return [...$('shList').querySelectorAll('input:checked')].map(c=>items.find(i=>i.id===c.value)).filter(Boolean)}
+function shareText(list){
+  if(!list.length)return '';
+  return 'Codes voor Scancodes:\n'+list.map(i=>'• '+i.name+' ('+(i.sym==='39'?i.code.toUpperCase():i.code)+')').join('\n')+
+    '\n\nToevoegen: tik op deze link\n'+WEB_URL+'#sc='+packCodes(list)+
+    '\n\nAndroid-app? Kopieer dit hele bericht en kies in Scancodes bij Zelf invullen: "Bericht van een collega plakken".';
+}
+function updShare(){
+  const list=shareChosen(),t=shareText(list);
+  $('shPrev').textContent=t||'Kies minstens één code.';
+  ['shGo','shCopy'].forEach(id=>$(id).disabled=!list.length);
+  $('shWa').href=list.length?'https://wa.me/?text='+encodeURIComponent(t):'#';
+  $('shWa').style.opacity=list.length?1:.4;
+  $('shGo').hidden=!navigator.share;
+}
+function openSheet(id){$(id).hidden=false;$('sheetBg').hidden=false;$('addBtn').hidden=true;document.body.classList.add('sheet');$(id).scrollTop=0}
+function closeSheet(id){$(id).hidden=true;$('sheetBg').hidden=true;$('addBtn').hidden=false;document.body.classList.remove('sheet')}
+function openShare(){
+  const list=items.filter(i=>!i.arch).sort((a,b)=>(a.group==='Standaard')-(b.group==='Standaard')||a.name.localeCompare(b.name,'nl',{numeric:true}));
+  if(!list.length){toast('Je hebt nog geen codes om te delen');return}
+  $('shList').innerHTML=list.map(i=>'<li><label><input type="checkbox" value="'+esc(i.id)+'"'+(i.id===sel?' checked':'')+'><span><b>'+esc(i.name)+'</b><small>'+(i.group?esc(i.group)+' · ':'')+esc(i.code)+'</small></span></label></li>').join('');
+  if(!sel||!list.some(i=>i.id===sel)){const f=$('shList').querySelector('input');if(f)f.checked=true}
+  updShare();openSheet('shareSheet');
+}
+$('shareBtn').addEventListener('click',openShare);
+$('shList').addEventListener('change',updShare);
+$('shAll').addEventListener('click',()=>{$('shList').querySelectorAll('input').forEach(c=>c.checked=true);updShare()});
+$('shNone').addEventListener('click',()=>{$('shList').querySelectorAll('input').forEach(c=>c.checked=false);updShare()});
+$('shClose').addEventListener('click',()=>closeSheet('shareSheet'));
+$('shGo').addEventListener('click',async()=>{const t=shareText(shareChosen());if(!t)return;try{await navigator.share({title:'Codes voor Scancodes',text:t})}catch(e){if(e&&e.name!=='AbortError')toast('Delen lukte niet, gebruik Kopiëren')}});
+$('shWa').addEventListener('click',e=>{if(!shareChosen().length)e.preventDefault()});
+$('shCopy').addEventListener('click',()=>{
+  const t=shareText(shareChosen());if(!t)return;
+  const fb=()=>{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();toast(ok?'Bericht gekopieerd, plak het in WhatsApp of een mail':'Kopiëren lukte niet')};
+  try{navigator.clipboard.writeText(t).then(()=>toast('Bericht gekopieerd, plak het in WhatsApp of een mail'),fb)}catch(e){fb()}
+});
+// ontvangen
+let recvList=null;
+function showRecv(list){
+  recvList=list;$('rvPaste').hidden=true;$('rvList').hidden=false;
+  $('rvList').innerHTML=list.map((i,n)=>{const has=items.some(x=>x.code===i.code&&x.sym===i.sym);return '<li><label><input type="checkbox" value="'+n+'"'+(has?' disabled':' checked')+'><span><b>'+esc(i.name)+'</b><small>'+esc(i.code)+(has?' · staat al in je lijst':'')+'</small></span></label></li>'}).join('');
+  $('rvGo').textContent='Toevoegen';
+}
+function openRecv(list){
+  closeForm();$('rvText').value='';$('rvErr').textContent='';recvList=null;
+  $('rvPaste').hidden=false;$('rvList').hidden=true;$('rvGo').textContent='Bekijken';
+  openSheet('recvSheet');if(list)showRecv(list);
+}
+$('recvOpen').addEventListener('click',()=>openRecv(null));
+$('rvClose').addEventListener('click',()=>closeSheet('recvSheet'));
+$('rvGo').addEventListener('click',()=>{
+  if(!recvList){const l=unpackText($('rvText').value);if(!l||!l.length){$('rvErr').textContent='In dit bericht staan geen codes. Plak het hele bericht, met de link erin.';return}showRecv(l);return}
+  let n=0;
+  $('rvList').querySelectorAll('input:checked').forEach(c=>{const i=recvList[+c.value];if(!i||items.some(x=>x.code===i.code&&x.sym===i.sym))return;i.id='c'+Date.now().toString(36)+n+Math.random().toString(36).slice(2,6);i.used=0;i.n=0;i.pin=false;i.arch=false;items.push(i);n++});
+  save();closeSheet('recvSheet');render();toast(n?n+' code'+(n===1?'':'s')+' toegevoegd':'Geen nieuwe codes toegevoegd');
+});
+$('sheetBg').addEventListener('click',()=>{['shareSheet','recvSheet'].forEach(id=>{if(!$(id).hidden)closeSheet(id)})});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')['shareSheet','recvSheet'].forEach(id=>{if(!$(id).hidden)closeSheet(id)})});
+// link van een collega geopend (#sc=...)
+function checkHash(){
+  if(!/^#sc=/.test(location.hash))return;
+  const l=unpackText(location.hash);
+  try{history.replaceState(null,'',location.pathname+location.search)}catch(e){location.hash=''}
+  if(l&&l.length)openRecv(l);else toast('Deze link bevat geen geldige codes');
+}
+window.addEventListener('hashchange',checkHash);
+const TERMS_V='1';
+function showTerms(first){$('terms').hidden=false;$('termsOk').textContent=first?'Akkoord':'Sluiten';$('termsOk').focus({preventScroll:true});$('terms').querySelector('.tbox').scrollTop=0}
+$('termsOk').addEventListener('click',()=>{lsSet('sc-terms',TERMS_V);$('terms').hidden=true});
+$('termsBtn').addEventListener('click',()=>showTerms(false));
+if(lsGet('sc-terms')!==TERMS_V)showTerms(true);
+checkHash();
+render();
+if(IN_APP)lsSet('sc-ok',String(APP_VERSION));
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}catch(e){}
+}
+</script>
+</body>
+</html>
