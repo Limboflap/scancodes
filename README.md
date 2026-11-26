@@ -7,7 +7,7 @@ Je werkbon-barcodes altijd bij de hand: tik een code aan en scan hem met de Acti
 **iPhone (en Android zonder app)**
 1. Open **https://limboflap.github.io/scancodes/** in Safari (op Android in Chrome).
 2. Tik op Delen → **Zet op beginscherm**.
-3. Open Scancodes vanaf je beginscherm. Hij werkt ook zonder internet.
+3. Open Scancodes vanaf je beginscherm. Hij werkt ook zonder internet en laat een balk "Nieuwe versie staat klaar" zien als er een update is: tik dan op Herstarten.
 
 **Android-app**
 1. Download **[Scancodes.apk](https://github.com/Limboflap/scancodes/raw/main/Scancodes.apk)** en open het bestand.

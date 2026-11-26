@@ -1013,7 +1013,7 @@ $('importBtn').addEventListener('click',()=>{
 });
 
 
-const APP_VERSION=31,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
+const APP_VERSION=32,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}};
 const DEFAULT_UPD='https://raw.githubusercontent.com/Limboflap/scancodes/main/';
 const updUrl=()=>{const v=lsGet('sc-update-url');return (v===null?DEFAULT_UPD:v).trim()};
@@ -1040,7 +1040,7 @@ async function checkUpdate(manual){
 }
 if(IN_APP){
   $('upBox').hidden=false;if(!window.SC_APK)$('apkOld').hidden=false;$('bkSum').textContent='Back-up, overzetten en updates';
-  $('upVer').textContent='Je gebruikt versie '+APP_VERSION+(window.SC_APK?' (Android-app '+window.SC_APK+')':'')+'. De app kijkt bij het opstarten en daarna elke dag of er een nieuwe versie is.';
+  $('upVer').textContent='Je gebruikt versie '+APP_VERSION+(window.SC_APK?' (Android-app '+window.SC_APK+')':'')+'. De app kijkt bij het opstarten en daarna elke paar uur of er een nieuwe versie is.';
   $('upUrl').value=updUrl();
   $('upUrl').addEventListener('change',e=>{lsSet('sc-update-url',e.target.value.trim())});
   $('upBtn').addEventListener('click',async()=>{lsSet('sc-update-url',$('upUrl').value.trim());lsSet('sc-last-check',String(Date.now()));await checkUpdate(true);$('upLast').textContent='Laatst gecontroleerd: '+lastTxt()+'.'});
@@ -1048,24 +1048,43 @@ if(IN_APP){
   setTimeout(()=>autoCheck(true),2500);
   try{const c=JSON.parse(lsGet('sc-app')||'null');if(c&&c.v>APP_VERSION)showUpd(c.v)}catch(e){}
 }
-// elke dag op updates controleren, ook als de app de hele dag openstaat
-const DAY=864e5;
+// regelmatig op updates controleren, ook als de app de hele dag openstaat
+const WEB_APP=!IN_APP&&(/\.github\.io$/.test(location.hostname)||location.hostname==='localhost');
+const GAP=IN_APP?3*36e5:15*6e4;
 function lastTxt(){const t=+lsGet('sc-last-check')||0;if(!t)return 'nog niet';const d=new Date(t);return d.toLocaleDateString('nl-NL',{day:'numeric',month:'short'})+' om '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}
 function showUpd(v){$('updTxt').textContent='Nieuwe versie '+(v||'')+' staat klaar';$('updBar').hidden=false}
-$('updGo').addEventListener('click',()=>location.reload());
+$('updGo').addEventListener('click',async()=>{
+  $('updGo').disabled=true;$('updTxt').textContent='Bezig met bijwerken…';
+  if(WEB_APP){
+    // iPhone-beginscherm: oude bestanden weggooien zodat de nieuwe versie echt geladen wordt
+    try{const r=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(r)await r.update()}catch(e){}
+    try{const ks=await caches.keys();await Promise.all(ks.filter(k=>/^scancodes-\d/.test(k)).map(k=>caches.delete(k)))}catch(e){}
+    location.replace(location.pathname+'?v='+Date.now());return;
+  }
+  location.reload();
+});
+async function webCheck(){
+  try{
+    const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;
+    const v=+(await r.json()).version;if(v>APP_VERSION)showUpd(v);
+  }catch(e){}
+}
 async function autoCheck(force){
+  if(!IN_APP&&!WEB_APP)return;
   const last=+lsGet('sc-last-check')||0;
-  if(!force&&Date.now()-last<DAY)return;
+  if(!force&&Date.now()-last<GAP)return;
   lsSet('sc-last-check',String(Date.now()));
   if(IN_APP){await checkUpdate(false);$('upLast').textContent='Laatst gecontroleerd: '+lastTxt()+'.'}
-  else{try{const r=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(r)await r.update()}catch(e){}}
+  else await webCheck();
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoCheck(false)});
-setInterval(()=>{if(!document.hidden)autoCheck(false)},36e5);
-if(!IN_APP&&navigator.serviceWorker&&location.protocol==='https:'){
-  let had=!!navigator.serviceWorker.controller;
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)showUpd('');had=true});
-  setTimeout(()=>autoCheck(false),4000);
+window.addEventListener('pageshow',()=>autoCheck(false));
+window.addEventListener('focus',()=>autoCheck(false));
+setInterval(()=>{if(!document.hidden)autoCheck(false)},15*6e4);
+if(WEB_APP){
+  if(/[?&]v=\d/.test(location.search)){try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}}
+  if(navigator.serviceWorker){let had=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)showUpd('');had=true})}
+  setTimeout(()=>autoCheck(true),2500);
 }
 const COLORS=[['Geel','#f2b705'],['Oranje','#ef7d1a'],['Rood','#d23b2e'],['Roze','#d94f8c'],['Paars','#7b4fc4'],['Blauw','#2f6fd6'],['Turquoise','#119a9a'],['Groen','#2e9d5b'],['Grijs','#5f6b73']];
 const DEF_THEME={accent:'#f2b705',mode:'auto'};
