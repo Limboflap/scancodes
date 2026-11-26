@@ -15,6 +15,10 @@ Je werkbon-barcodes altijd bij de hand: tik een code aan en scan hem met de Acti
 3. Sta de camera toe als de app erom vraagt: dan scan je een werkbon live met "Toevoegen".
 4. Updates komen vanzelf binnen bij het opstarten.
 
+## Uren bijhouden
+Tik bovenin op **Start** als je begint en op **Einde** als je stopt (ook voor een pauze). Via het menu (☰) → **Mijn uren** zie je je tijden per dag, week en maand, kun je tijden aanpassen of toevoegen en een maand kopiëren als tabel voor Excel.
+Dit is je eigen geheugensteun, geen officiële registratie. De tijden staan alleen op je telefoon.
+
 ## Codes delen met een collega
 Tik op **Delen**, vink de codes aan en stuur het bericht via WhatsApp of kopieer het.
 Je collega tikt op de link in het bericht (web-app), of kopieert het hele bericht en kiest in de Android-app bij *Zelf invullen* → **Bericht van een collega plakken**.
@@ -29,7 +33,7 @@ Scancodes is een gratis hulpmiddel van een particulier, niet gemaakt door of ver
 - **Eigen risico:** de app wordt geleverd zoals hij is, zonder enige garantie.
 - **Eigen verantwoordelijkheid:** controleer zelf of de juiste code is gescand en houd je aan de afspraken van je werkgever. Gebruik de app alleen voor registraties die kloppen.
 - **Geen aansprakelijkheid:** de maker is niet aansprakelijk voor schade door het gebruik, voor zover de wet dat toestaat.
-- **Privacy:** je codes en foto's blijven op je telefoon; de maker ontvangt niets. GitHub en jsDelivr zien je IP-adres bij updates en het laden van de tekstherkenner.
+- **Privacy:** je codes, gewerkte tijden en foto's blijven op je telefoon; de maker ontvangt niets. GitHub en jsDelivr zien je IP-adres bij updates en het laden van de tekstherkenner.
 - **Geen verplichtingen:** de app kan zonder aankondiging veranderen of stoppen; er is geen recht op hulp of updates.
 - **Licentie:** MIT, zie [LICENSE](LICENSE).
 
