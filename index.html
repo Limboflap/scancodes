@@ -57,7 +57,7 @@ h1,h2,.nm{font-family:"Barlow Condensed","Avenir Next Condensed",sans-serif-cond
 .mnav button{min-width:48px;font-size:22px;padding:0}
 .tot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
 .tot div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-.tot small{display:block;color:var(--mute);font-size:13px}.tot b{font:700 clamp(22px,6vw,28px)/1.1 "Barlow Condensed","Avenir Next Condensed",sans-serif-condensed,sans-serif;font-variant-numeric:tabular-nums}
+.tot small{display:block;color:var(--mute);font-size:13px}.tot .ov{margin-top:2px;font-weight:600;color:var(--ink)}.tot .ov:empty{display:none}.tot b{font:700 clamp(22px,6vw,28px)/1.1 "Barlow Condensed","Avenir Next Condensed",sans-serif-condensed,sans-serif;font-variant-numeric:tabular-nums}
 .wk{display:flex;justify-content:space-between;align-items:baseline;margin:16px 2px 6px;font:700 17px/1.2 "Barlow Condensed","Avenir Next Condensed",sans-serif-condensed,sans-serif;color:var(--mute)}
 .days{list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .days li{border-top:1px solid var(--line)}.days li:first-child{border-top:0}
@@ -67,6 +67,7 @@ h1,h2,.nm{font-family:"Barlow Condensed","Avenir Next Condensed",sans-serif-cond
 .days .sum{font:700 20px/1 "Barlow Condensed","Avenir Next Condensed",sans-serif-condensed,sans-serif;font-variant-numeric:tabular-nums;text-align:right}
 .days .sum small{display:block;font:400 12px Barlow,sans-serif;color:var(--mute);margin-top:2px}
 .days li.today button{background:var(--on);background:color-mix(in srgb,var(--y) 18%,var(--card))}
+.ovb{color:var(--ink);font-weight:700}
 .noh{padding:24px 6px;color:var(--mute);text-align:center}
 .prow{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:50px;padding:6px 14px;font-weight:600}.prow span:first-child{min-width:0;overflow-wrap:anywhere}
 .ses .dp{grid-column:1/-1;margin-top:-2px}
@@ -343,6 +344,10 @@ body.sheet{overflow:hidden}
 <div id="settings" class="sheetbox" hidden role="dialog" aria-modal="true" aria-labelledby="setT">
   <div class="grab" aria-hidden="true"></div>
   <h2 id="setT">Instellingen</h2>
+  <h3 id="wrkH">Werktijden en overuren</h3>
+  <label class="chk"><input type="checkbox" id="wrkOn"> Tijd buiten mijn werktijden telt als overuren</label>
+  <div class="brk" id="wrkRow"><input type="time" id="wrkS" aria-label="Werktijd begint"><span>–</span><input type="time" id="wrkE" aria-label="Werktijd eindigt"><span></span></div>
+  <p class="err" id="wrkErr"></p>
   <h3 id="brkH">Vaste pauzes</h3>
   <label class="chk"><input type="checkbox" id="brkOn"> Pauzes automatisch van mijn uren aftrekken</label>
   <div id="brkList"></div>
@@ -399,7 +404,7 @@ body.sheet{overflow:hidden}
     <button type="button" data-go="share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.3M8.3 13.2l7.4 4.3"/></svg>Codes delen</button>
     <button type="button" data-go="recv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Codes van een collega</button>
     <div class="sep"></div>
-    <button type="button" data-go="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Instellingen en pauzes</button>
+    <button type="button" data-go="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Werktijden, pauzes en kleur</button>
     <button type="button" data-go="backup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 15v4h16v-4M12 4v11M8 11l4 4 4-4"/></svg>Back-up en updates</button>
     <button type="button" data-go="terms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6M9 18h4"/></svg>Voorwaarden</button>
   </nav>
@@ -408,7 +413,7 @@ body.sheet{overflow:hidden}
   <div class="hh"><button type="button" id="hClose" aria-label="Terug">‹</button><h2 id="hT">Mijn uren</h2><button type="button" id="hCopy" aria-label="Maand kopiëren als tabel">Kopiëren</button></div>
   <div class="in">
     <div class="mnav"><button type="button" id="mPrev" aria-label="Vorige maand">‹</button><b id="mName"></b><button type="button" id="mNext" aria-label="Volgende maand">›</button></div>
-    <div class="tot"><div><small>Deze maand</small><b id="tMonth">0:00</b></div><div><small>Deze week</small><b id="tWeek">0:00</b></div><div><small>Vandaag</small><b id="tToday">0:00</b></div></div>
+    <div class="tot"><div><small>Deze maand</small><b id="tMonth">0:00</b><small class="ov" id="oMonth"></small></div><div><small>Deze week</small><b id="tWeek">0:00</b><small class="ov" id="oWeek"></small></div><div><small>Vandaag</small><b id="tToday">0:00</b><small class="ov" id="oToday"></small></div></div>
     <div id="hProj"></div>
     <div id="hList"></div>
     <div class="row"><button type="button" class="grow" id="hAdd">+ Tijden toevoegen</button></div>
@@ -996,14 +1001,14 @@ $('names').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
 $('fName').addEventListener('input',()=>{autoName=false});
 
 $('copyBtn').addEventListener('click',()=>{
-  const txt=JSON.stringify({codes:items.map(({name,code,group,sym,pin,arch})=>({name,code,group,sym,pin,arch})),uren:loadH(),pauzes:getBrk()});
+  const txt=JSON.stringify({codes:items.map(({name,code,group,sym,pin,arch})=>({name,code,group,sym,pin,arch})),uren:loadH(),pauzes:getBrk(),werktijden:getWrk()});
   $('io').value=txt;
   try{navigator.clipboard.writeText(txt).then(()=>toast('Lijst gekopieerd. Plak hem in een notitie.'),()=>{$('io').select();toast('Kopiëren mislukt. De lijst staat in het vak: selecteer en kopieer hem zelf.')})}
   catch(e){$('io').select();toast('Selecteer de tekst in het vak en kopieer hem zelf.')}
 });
 $('importBtn').addEventListener('click',()=>{
   let arr,hrs=null;try{arr=JSON.parse($('io').value)}catch(e){toast('Dit lijkt geen gekopieerde lijst.');return}
-  if(arr&&!Array.isArray(arr)&&typeof arr==='object'){hrs=arr.uren;if(arr.pauzes&&typeof arr.pauzes==='object'){lsSet('sc-breaks',JSON.stringify(arr.pauzes));lsSet('sc-breaks',JSON.stringify(getBrk()))}arr=arr.codes}
+  if(arr&&!Array.isArray(arr)&&typeof arr==='object'){hrs=arr.uren;if(arr.pauzes&&typeof arr.pauzes==='object'){lsSet('sc-breaks',JSON.stringify(arr.pauzes));lsSet('sc-breaks',JSON.stringify(getBrk()))}if(arr.werktijden&&typeof arr.werktijden==='object'){lsSet('sc-work',JSON.stringify(arr.werktijden));lsSet('sc-work',JSON.stringify(getWrk()))}arr=arr.codes}
   if(!Array.isArray(arr)){toast('Dit lijkt geen gekopieerde lijst.');return}
   const nh=Array.isArray(hrs)?mergeH(hrs):0;
   let n=0;
@@ -1016,7 +1021,7 @@ $('importBtn').addEventListener('click',()=>{
 });
 
 
-const APP_VERSION=30,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
+const APP_VERSION=31,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}};
 const DEFAULT_UPD='https://raw.githubusercontent.com/Limboflap/scancodes/main/';
 const updUrl=()=>{const v=lsGet('sc-update-url');return (v===null?DEFAULT_UPD:v).trim()};
@@ -1081,6 +1086,9 @@ function applyTheme(t){
   const m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',t.accent);
 }
 function brkRow(p,q){return '<div class="brk"><input type="time" class="bs" value="'+esc(p)+'" aria-label="Pauze begint"><span>–</span><input type="time" class="be" value="'+esc(q)+'" aria-label="Pauze eindigt"><button type="button" class="ic delB" aria-label="Pauze verwijderen">✕</button></div>'}
+function renderWork(){const w=getWrk();$('wrkOn').checked=w.on;$('wrkS').value=w.s;$('wrkE').value=w.e;$('wrkErr').textContent=''}
+function saveWork(){const s=$('wrkS').value,e=$('wrkE').value;if(!tmOk(s)||!tmOk(e)||tmMin(e)<=tmMin(s)){$('wrkErr').textContent='Vul een begintijd en een latere eindtijd in.';return false}$('wrkErr').textContent='';lsSet('sc-work',JSON.stringify({on:$('wrkOn').checked,s,e}));clockRender();return true}
+$('wrkOn').addEventListener('change',saveWork);$('wrkS').addEventListener('change',saveWork);$('wrkE').addEventListener('change',saveWork);
 function renderBreaks(){const b=getBrk();$('brkOn').checked=b.on;$('brkList').innerHTML=b.list.map(([p,q])=>brkRow(p,q)).join('');$('brkErr').textContent=''}
 function saveBreaks(){
   const list=[];let bad=false;
@@ -1095,7 +1103,7 @@ $('brkList').addEventListener('change',saveBreaks);
 $('brkList').addEventListener('click',e=>{const b=e.target.closest('.delB');if(b){b.parentElement.remove();saveBreaks()}});
 $('brkAdd').addEventListener('click',()=>{$('brkList').insertAdjacentHTML('beforeend',brkRow('',''));const i=$('brkList').querySelector('.brk:last-child .bs');if(i)i.focus()});
 function renderSettings(){
-  renderBreaks();
+  renderWork();renderBreaks();
   const t=getTheme();
   $('swatches').innerHTML=COLORS.map(([n,c])=>'<button type="button" role="radio" aria-checked="'+(c===t.accent)+'" data-c="'+c+'" style="background:'+c+';--c-ink:'+textOn(c)+'">'+n+'</button>').join('');
   $('accentPick').value=t.accent;
@@ -1105,7 +1113,7 @@ function setTheme(p){const t=Object.assign(getTheme(),p);lsSet('sc-theme',JSON.s
 function openSettings(){renderSettings();$('settings').hidden=false;$('sheetBg').hidden=false;$('addBtn').hidden=true;document.body.classList.add('sheet')}
 function closeSettings(){$('settings').hidden=true;$('sheetBg').hidden=true;$('addBtn').hidden=false;document.body.classList.remove('sheet')}
 $('setBtn').addEventListener('click',openSettings);
-$('setClose').addEventListener('click',()=>{if(saveBreaks()!==false)closeSettings()});
+$('setClose').addEventListener('click',()=>{if(saveWork()!==false&&saveBreaks()!==false)closeSettings()});
 $('sheetBg').addEventListener('click',()=>{if(!$('settings').hidden)closeSettings()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('settings').hidden)closeSettings()});
 $('swatches').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTheme({accent:b.dataset.c})});
@@ -1217,6 +1225,16 @@ function brkIn(a0,a1){ // ms pauze binnen [a0,a1)
 const net=(a0,a1)=>Math.max(0,a1-a0-brkIn(a0,a1));
 const durOf=(x,now)=>net(x.s,x.e===null?now:x.e);
 function sumRange(a,from,to,now){let s=0;for(const x of a){const st=Math.max(x.s,from),en=Math.min(x.e===null?now:x.e,to);if(en>st)s+=net(st,en)}return s}
+const DEF_WRK={on:true,s:'07:45',e:'16:30'};
+function getWrk(){try{const w=JSON.parse(lsGet('sc-work')||'null');if(w&&typeof w.on==='boolean'&&tmOk(w.s)&&tmOk(w.e)&&tmMin(w.e)>tmMin(w.s))return {on:w.on,s:w.s,e:w.e}}catch(e){}return Object.assign({},DEF_WRK)}
+function normalIn(a0,a1){ // nette werktijd binnen de normale werktijden
+  const w=getWrk();if(!w.on)return net(a0,a1);let s=0;const [sh,sm]=w.s.split(':').map(Number),[eh,em]=w.e.split(':').map(Number);
+  for(let d=startOfDay(a0);d<a1;){const dt=new Date(d);const w0=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate(),sh,sm).getTime(),w1=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate(),eh,em).getTime();const o0=Math.max(a0,w0),o1=Math.min(a1,w1);if(o1>o0)s+=net(o0,o1);d=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()+1).getTime()}
+  return s;
+}
+const overOf=(a0,a1)=>Math.max(0,net(a0,a1)-normalIn(a0,a1));
+const overDur=(x,now)=>overOf(x.s,x.e===null?now:x.e);
+function sumOver(a,from,to,now){let s=0;for(const x of a){const st=Math.max(x.s,from),en=Math.min(x.e===null?now:x.e,to);if(en>st)s+=overOf(st,en)}return s}
 function inBreak(t){const b=getBrk();if(!b.on)return null;const d=new Date(t),m=d.getHours()*60+d.getMinutes();const x=b.list.find(([p,q])=>m>=tmMin(p)&&m<tmMin(q));return x?x[1]:null}
 function startOfDay(t){const d=new Date(t);d.setHours(0,0,0,0);return d.getTime()}
 function startOfWeek(t){const d=new Date(startOfDay(t));const wd=(d.getDay()+6)%7;d.setDate(d.getDate()-wd);return d.getTime()}
@@ -1225,7 +1243,7 @@ function clockRender(){
   const a=loadH(),r=running(a),now=Date.now(),today=sumRange(a,startOfDay(now),now,now),cov=a.find(x=>x.e!==null&&x.s<=now&&x.e>now);
   $('clkStart').disabled=!!r;$('clkEnd').disabled=!r;$('clkDot').className='dot'+(r?' on':'');
   let t;
-  if(r){const ib=inBreak(now);t=(ib?'Pauze tot '+ib:'Bezig sinds '+tOf(r.s))+' · '+hm(durOf(r,now))+(r.p?' · '+r.p.n:'');if(now-r.s>14*36e5)t='Vergeten te stoppen? Bezig sinds '+(startOfDay(r.s)===startOfDay(now)?'':new Date(r.s).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric'})+' ')+tOf(r.s)}
+  if(r){const ib=inBreak(now);const ov=overDur(r,now);t=(ib?'Pauze tot '+ib:'Bezig sinds '+tOf(r.s))+' · '+hm(durOf(r,now))+(ov>=6e4?' ('+hm(ov)+' over)':'')+(r.p?' · '+r.p.n:'');if(now-r.s>14*36e5)t='Vergeten te stoppen? Bezig sinds '+(startOfDay(r.s)===startOfDay(now)?'':new Date(r.s).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric'})+' ')+tOf(r.s)}
   else if(cov)t='Ingevuld tot '+tOf(cov.e)+(cov.p?' · '+cov.p.n:'')+' · vandaag '+hm(today);
   else t=today>0?'Vandaag '+hm(today)+' gewerkt':'Nog niet gestart';
   $('clkTxt').textContent=t;
@@ -1256,39 +1274,40 @@ function closeHours(){$('hours').hidden=true;$('addBtn').hidden=false;document.b
 function hoursRender(){
   const a=loadH(),now=Date.now(),m0=hMonth.getTime(),m1=new Date(hMonth.getFullYear(),hMonth.getMonth()+1,1).getTime();
   $('mName').textContent=hMonth.toLocaleDateString('nl-NL',{month:'long',year:'numeric'});
-  {const b=getBrk();$('hBrk').innerHTML=(b.on&&b.list.length?'Vaste pauzes worden afgetrokken: '+b.list.map(x=>esc(x[0])+'–'+esc(x[1])).join(', ')+'. ':'Er worden geen pauzes afgetrokken. ')+'<button type="button" class="linkbtn" id="hBrkBtn" style="padding:0;min-height:0">Pauzes aanpassen</button>';}
+  {const b=getBrk(),w=getWrk();$('hBrk').innerHTML=(w.on?'Overuren: alles voor '+esc(w.s)+' en na '+esc(w.e)+'. ':'')+(b.on&&b.list.length?'Vaste pauzes worden afgetrokken: '+b.list.map(x=>esc(x[0])+'–'+esc(x[1])).join(', ')+'. ':'Er worden geen pauzes afgetrokken. ')+'<button type="button" class="linkbtn" id="hBrkBtn" style="padding:0;min-height:0">Aanpassen</button>';}
   $('mNext').disabled=m1>now;
   const mt=sumRange(a,m0,m1,now),wt=sumRange(a,startOfWeek(now),startOfWeek(now)+7*864e5,now),tt=sumRange(a,startOfDay(now),startOfDay(now)+864e5,now);
   $('tMonth').textContent=hm(mt);$('tWeek').textContent=hm(wt);$('tToday').textContent=hm(tt);
+  {const W0=startOfWeek(now),D0=startOfDay(now),f=v=>v>=6e4?'waarvan '+hm(v)+' over':'';$('oMonth').textContent=f(sumOver(a,m0,m1,now));$('oWeek').textContent=f(sumOver(a,W0,W0+7*864e5,now));$('oToday').textContent=f(sumOver(a,D0,D0+864e5,now))}
   // dagen van deze maand met tijden, nieuwste bovenaan, gegroepeerd per week
   const byDay={};for(const x of a){if(x.s<m0||x.s>=m1)continue;(byDay[dayKey(x.s)]=byDay[dayKey(x.s)]||[]).push(x)}
   const keys=Object.keys(byDay).sort().reverse();
-  const pm={};for(const x of a){if(x.s<m0||x.s>=m1)continue;const k=x.p?x.p.n:'Zonder project';pm[k]=(pm[k]||0)+durOf(x,now)}
+  const pm={},po={};for(const x of a){if(x.s<m0||x.s>=m1)continue;const k=x.p?x.p.n:'Zonder project';pm[k]=(pm[k]||0)+durOf(x,now);po[k]=(po[k]||0)+overDur(x,now)}
   const pk=Object.keys(pm).sort((p,q)=>pm[q]-pm[p]);
-  $('hProj').innerHTML=pk.length?'<div class="wk"><span>Per project</span><span></span></div><ul class="days plist">'+pk.map(k=>'<li><div class="prow"><span>'+esc(k)+'</span><span class="sum">'+hm(pm[k])+'<small>'+dec(pm[k])+' u</small></span></div></li>').join('')+'</ul>':'';
+  $('hProj').innerHTML=pk.length?'<div class="wk"><span>Per project</span><span></span></div><ul class="days plist">'+pk.map(k=>'<li><div class="prow"><span>'+esc(k)+'</span><span class="sum">'+hm(pm[k])+'<small>'+dec(pm[k])+' u'+(po[k]>=6e4?' · '+hm(po[k])+' over':'')+'</small></span></div></li>').join('')+'</ul>':'';
   if(!keys.length){$('hList').innerHTML='<p class="noh">Nog geen tijden in deze maand. Tik bovenin op <b>Start</b> als je begint met werken.</p>';return}
-  let html='',curW=null,wSum=0,buf='';
-  const flush=()=>{if(curW!==null)html+='<div class="wk"><span>Week '+curW+'</span><span>'+hm(wSum)+'</span></div><ul class="days">'+buf+'</ul>'};
+  let html='',curW=null,wSum=0,wOver=0,buf='';
+  const flush=()=>{if(curW!==null)html+='<div class="wk"><span>Week '+curW+'</span><span>'+hm(wSum)+(wOver>=6e4?' · '+hm(wOver)+' over':'')+'</span></div><ul class="days">'+buf+'</ul>'};
   for(const k of keys){
     const ses=byDay[k],t0=ses[0].s,w=isoWeek(t0);
-    if(w!==curW){flush();curW=w;wSum=0;buf=''}
-    const tot=ses.reduce((s,x)=>s+durOf(x,now),0),gross=ses.reduce((s,x)=>s+((x.e===null?now:x.e)-x.s),0);wSum+=tot;
+    if(w!==curW){flush();curW=w;wSum=0;wOver=0;buf=''}
+    const tot=ses.reduce((s,x)=>s+durOf(x,now),0),gross=ses.reduce((s,x)=>s+((x.e===null?now:x.e)-x.s),0),ovt=ses.reduce((s,x)=>s+overDur(x,now),0);wSum+=tot;wOver+=ovt;
     const d=new Date(t0);
-    buf+='<li class="'+(k===dayKey(now)?'today':'')+'"><button type="button" data-day="'+k+'"><span class="dd">'+d.toLocaleDateString('nl-NL',{weekday:'short'})+'<small>'+d.getDate()+' '+d.toLocaleDateString('nl-NL',{month:'short'})+'</small></span><span class="tt">'+ses.map(x=>tOf(x.s)+' – '+(x.e===null?'bezig':tOf(x.e))+(x.p?' · '+esc(x.p.n):'')).join('<br>')+'</span><span class="sum">'+hm(tot)+'<small>'+dec(tot)+' u'+(gross-tot>=6e4?' · −'+hm(gross-tot)+' pauze':'')+'</small></span></button></li>';
+    buf+='<li class="'+(k===dayKey(now)?'today':'')+'"><button type="button" data-day="'+k+'"><span class="dd">'+d.toLocaleDateString('nl-NL',{weekday:'short'})+'<small>'+d.getDate()+' '+d.toLocaleDateString('nl-NL',{month:'short'})+'</small></span><span class="tt">'+ses.map(x=>tOf(x.s)+' – '+(x.e===null?'bezig':tOf(x.e))+(x.p?' · '+esc(x.p.n):'')).join('<br>')+'</span><span class="sum">'+hm(tot)+'<small>'+dec(tot)+' u'+(gross-tot>=6e4?' · −'+hm(gross-tot)+' pauze':'')+(ovt>=6e4?'<br><b class="ovb">'+hm(ovt)+' over</b>':'')+'</small></span></button></li>';
   }
   flush();$('hList').innerHTML=html;
 }
 $('hClose').addEventListener('click',closeHours);
-$('hBrk').addEventListener('click',e=>{if(e.target.id==='hBrkBtn'){closeHours();openSettings();setTimeout(()=>{try{$('brkH').scrollIntoView({block:'start'})}catch(x){}},50)}});
+$('hBrk').addEventListener('click',e=>{if(e.target.id==='hBrkBtn'){closeHours();openSettings();setTimeout(()=>{try{$('wrkH').scrollIntoView({block:'start'})}catch(x){}},50)}});
 $('mPrev').addEventListener('click',()=>{hMonth=new Date(hMonth.getFullYear(),hMonth.getMonth()-1,1);hoursRender()});
 $('mNext').addEventListener('click',()=>{hMonth=new Date(hMonth.getFullYear(),hMonth.getMonth()+1,1);hoursRender()});
 $('hList').addEventListener('click',e=>{const b=e.target.closest('button[data-day]');if(b)openDay(b.dataset.day)});
 $('hAdd').addEventListener('click',()=>openDay(dayKey(Date.now()),true));
 $('hCopy').addEventListener('click',()=>{
   const a=loadH(),now=Date.now(),m0=hMonth.getTime(),m1=new Date(hMonth.getFullYear(),hMonth.getMonth()+1,1).getTime();
-  const rows=a.filter(x=>x.s>=m0&&x.s<m1).map(x=>[new Date(x.s).toLocaleDateString('nl-NL'),tOf(x.s),x.e===null?'':tOf(x.e),hm((x.e===null?now:x.e)-x.s-durOf(x,now)),hm(durOf(x,now)),dec(durOf(x,now)),x.p?x.p.n.replace(/[\t\n]/g,' '):''].join('\t'));
+  const rows=a.filter(x=>x.s>=m0&&x.s<m1).map(x=>[new Date(x.s).toLocaleDateString('nl-NL'),tOf(x.s),x.e===null?'':tOf(x.e),hm((x.e===null?now:x.e)-x.s-durOf(x,now)),hm(durOf(x,now)),dec(durOf(x,now)),hm(overDur(x,now)),dec(overDur(x,now)),x.p?x.p.n.replace(/[\t\n]/g,' '):''].join('\t'));
   if(!rows.length){toast('Geen tijden in deze maand');return}
-  const t='Datum\tBegin\tEinde\tPauze\tDuur\tUren\tProject\n'+rows.join('\n')+'\nTotaal\t\t\t\t'+hm(sumRange(a,m0,m1,now))+'\t'+dec(sumRange(a,m0,m1,now));
+  const ot=sumOver(a,m0,m1,now);const t='Datum\tBegin\tEinde\tPauze\tDuur\tUren\tOveruren\tOveruren (dec)\tProject\n'+rows.join('\n')+'\nTotaal\t\t\t\t'+hm(sumRange(a,m0,m1,now))+'\t'+dec(sumRange(a,m0,m1,now))+'\t'+hm(ot)+'\t'+dec(ot);
   const fb=()=>{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();toast(ok?'Tabel gekopieerd, plak hem in Excel of een bericht':'Kopiëren lukte niet')};
   try{navigator.clipboard.writeText(t).then(()=>toast('Tabel gekopieerd, plak hem in Excel of een bericht'),fb)}catch(e){fb()}
 });
