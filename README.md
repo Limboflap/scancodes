@@ -17,7 +17,7 @@ Je werkbon-barcodes altijd bij de hand: tik een code aan en scan hem met de Acti
 
 ## Uren bijhouden
 Tik bovenin op **Start** als je begint en op **Einde** als je stopt (ook voor een pauze). Via het menu (☰) → **Mijn uren** zie je je tijden per dag, week en maand, zie je de totalen per project, kun je tijden aanpassen of toevoegen (ook met een eindtijd die nog moet komen) en een maand kopiëren als tabel voor Excel. Bij Start wordt de code die je openhebt als project opgeslagen; kies je tijdens het werken een andere code, dan vraagt de app of je wilt overstappen.
-Dit is je eigen geheugensteun, geen officiële registratie. De tijden staan alleen op je telefoon.
+Vaste pauzes (standaard 09:00–09:15 en 12:30–13:00) worden automatisch afgetrokken; die pas je aan via ☰ → Instellingen en pauzes. Dit is je eigen geheugensteun, geen officiële registratie. De tijden staan alleen op je telefoon.
 
 ## Codes delen met een collega
 Tik op **Delen**, vink de codes aan en stuur het bericht via WhatsApp of kopieer het.

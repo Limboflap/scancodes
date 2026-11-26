@@ -193,6 +193,8 @@ form.add{position:fixed;left:0;right:0;bottom:0;z-index:9;max-width:640px;margin
 .swatches button{min-height:64px;border-radius:12px;border:2px solid var(--line);padding:0;display:grid;place-items:end center;font:600 13px/1 Barlow,sans-serif;padding-bottom:6px;color:var(--c-ink)}
 .swatches button[aria-checked=true]{outline:3px solid var(--ink);outline-offset:2px}
 input[type=color]{padding:4px;height:52px;cursor:pointer}
+.chk{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:500}.chk input{width:22px;height:22px;min-height:0;accent-color:var(--ink)}
+.brk{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto;gap:8px;align-items:center;margin-bottom:8px}.brk .ic{width:44px;min-height:44px;border:1.5px solid var(--line);border-radius:8px}
 .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:2px solid var(--ink);border-radius:10px;overflow:hidden}
 .seg button{border:0;border-radius:0;min-height:46px;padding:0 6px}
 .seg button+button{border-left:2px solid var(--ink)}
@@ -333,6 +335,12 @@ body.sheet{overflow:hidden}
 <div id="settings" class="sheetbox" hidden role="dialog" aria-modal="true" aria-labelledby="setT">
   <div class="grab" aria-hidden="true"></div>
   <h2 id="setT">Instellingen</h2>
+  <h3 id="brkH">Vaste pauzes</h3>
+  <label class="chk"><input type="checkbox" id="brkOn"> Pauzes automatisch van mijn uren aftrekken</label>
+  <div id="brkList"></div>
+  <div class="row" style="margin-top:0"><button type="button" class="linkbtn" id="brkAdd" style="padding:0">+ Pauze toevoegen</button></div>
+  <p class="err" id="brkErr"></p>
+  <p class="hint" style="margin-top:0">Werk je tijdens een pauze door, dan telt die tijd niet mee. Een wijziging geldt ook voor je eerdere dagen.</p>
   <h3>Kleur</h3>
   <div class="swatches" id="swatches" role="radiogroup" aria-label="Kleur van de app"></div>
   <label class="f" style="margin-top:12px">Eigen kleur <span>Kies zelf een kleur</span><input type="color" id="accentPick" value="#f2b705"></label>
@@ -383,7 +391,7 @@ body.sheet{overflow:hidden}
     <button type="button" data-go="share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.3M8.3 13.2l7.4 4.3"/></svg>Codes delen</button>
     <button type="button" data-go="recv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Codes van een collega</button>
     <div class="sep"></div>
-    <button type="button" data-go="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Kleuren en weergave</button>
+    <button type="button" data-go="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Instellingen en pauzes</button>
     <button type="button" data-go="backup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 15v4h16v-4M12 4v11M8 11l4 4 4-4"/></svg>Back-up en updates</button>
     <button type="button" data-go="terms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6M9 18h4"/></svg>Voorwaarden</button>
   </nav>
@@ -396,6 +404,7 @@ body.sheet{overflow:hidden}
     <div id="hProj"></div>
     <div id="hList"></div>
     <div class="row"><button type="button" class="grow" id="hAdd">+ Tijden toevoegen</button></div>
+    <p class="hint" id="hBrk"></p>
     <p class="hint">Tik op een dag om tijden aan te passen. Je uren staan alleen op deze telefoon; dit overzicht is je eigen hulpmiddel en geen officiële registratie.</p>
   </div>
 </div>
@@ -979,14 +988,14 @@ $('names').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
 $('fName').addEventListener('input',()=>{autoName=false});
 
 $('copyBtn').addEventListener('click',()=>{
-  const txt=JSON.stringify({codes:items.map(({name,code,group,sym,pin,arch})=>({name,code,group,sym,pin,arch})),uren:loadH()});
+  const txt=JSON.stringify({codes:items.map(({name,code,group,sym,pin,arch})=>({name,code,group,sym,pin,arch})),uren:loadH(),pauzes:getBrk()});
   $('io').value=txt;
   try{navigator.clipboard.writeText(txt).then(()=>toast('Lijst gekopieerd. Plak hem in een notitie.'),()=>{$('io').select();toast('Kopiëren mislukt. De lijst staat in het vak: selecteer en kopieer hem zelf.')})}
   catch(e){$('io').select();toast('Selecteer de tekst in het vak en kopieer hem zelf.')}
 });
 $('importBtn').addEventListener('click',()=>{
   let arr,hrs=null;try{arr=JSON.parse($('io').value)}catch(e){toast('Dit lijkt geen gekopieerde lijst.');return}
-  if(arr&&!Array.isArray(arr)&&typeof arr==='object'){hrs=arr.uren;arr=arr.codes}
+  if(arr&&!Array.isArray(arr)&&typeof arr==='object'){hrs=arr.uren;if(arr.pauzes&&typeof arr.pauzes==='object'){lsSet('sc-breaks',JSON.stringify(arr.pauzes));lsSet('sc-breaks',JSON.stringify(getBrk()))}arr=arr.codes}
   if(!Array.isArray(arr)){toast('Dit lijkt geen gekopieerde lijst.');return}
   const nh=Array.isArray(hrs)?mergeH(hrs):0;
   let n=0;
@@ -999,7 +1008,7 @@ $('importBtn').addEventListener('click',()=>{
 });
 
 
-const APP_VERSION=29,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
+const APP_VERSION=30,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}};
 const DEFAULT_UPD='https://raw.githubusercontent.com/Limboflap/scancodes/main/';
 const updUrl=()=>{const v=lsGet('sc-update-url');return (v===null?DEFAULT_UPD:v).trim()};
@@ -1063,7 +1072,22 @@ function applyTheme(t){
   if(t.mode==='auto'){if(ORIG_THEME)ROOT.setAttribute('data-theme',ORIG_THEME);else ROOT.removeAttribute('data-theme')}else ROOT.setAttribute('data-theme',t.mode);
   const m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',t.accent);
 }
+function brkRow(p,q){return '<div class="brk"><input type="time" class="bs" value="'+esc(p)+'" aria-label="Pauze begint"><span>–</span><input type="time" class="be" value="'+esc(q)+'" aria-label="Pauze eindigt"><button type="button" class="ic delB" aria-label="Pauze verwijderen">✕</button></div>'}
+function renderBreaks(){const b=getBrk();$('brkOn').checked=b.on;$('brkList').innerHTML=b.list.map(([p,q])=>brkRow(p,q)).join('');$('brkErr').textContent=''}
+function saveBreaks(){
+  const list=[];let bad=false;
+  $('brkList').querySelectorAll('.brk').forEach(r=>{const p=r.querySelector('.bs').value,q=r.querySelector('.be').value;if(!p&&!q)return;if(!tmOk(p)||!tmOk(q)||tmMin(q)<=tmMin(p)){bad=true;return}list.push([p,q])});
+  if(bad){$('brkErr').textContent='Elke pauze heeft een begin- en een latere eindtijd nodig.';return false}
+  list.sort((x,y)=>tmMin(x[0])-tmMin(y[0]));
+  for(let i=1;i<list.length;i++)if(tmMin(list[i][0])<tmMin(list[i-1][1])){$('brkErr').textContent='Twee pauzes overlappen elkaar.';return false}
+  $('brkErr').textContent='';lsSet('sc-breaks',JSON.stringify({on:$('brkOn').checked,list}));clockRender();return true;
+}
+$('brkOn').addEventListener('change',saveBreaks);
+$('brkList').addEventListener('change',saveBreaks);
+$('brkList').addEventListener('click',e=>{const b=e.target.closest('.delB');if(b){b.parentElement.remove();saveBreaks()}});
+$('brkAdd').addEventListener('click',()=>{$('brkList').insertAdjacentHTML('beforeend',brkRow('',''));const i=$('brkList').querySelector('.brk:last-child .bs');if(i)i.focus()});
 function renderSettings(){
+  renderBreaks();
   const t=getTheme();
   $('swatches').innerHTML=COLORS.map(([n,c])=>'<button type="button" role="radio" aria-checked="'+(c===t.accent)+'" data-c="'+c+'" style="background:'+c+';--c-ink:'+textOn(c)+'">'+n+'</button>').join('');
   $('accentPick').value=t.accent;
@@ -1073,7 +1097,7 @@ function setTheme(p){const t=Object.assign(getTheme(),p);lsSet('sc-theme',JSON.s
 function openSettings(){renderSettings();$('settings').hidden=false;$('sheetBg').hidden=false;$('addBtn').hidden=true;document.body.classList.add('sheet')}
 function closeSettings(){$('settings').hidden=true;$('sheetBg').hidden=true;$('addBtn').hidden=false;document.body.classList.remove('sheet')}
 $('setBtn').addEventListener('click',openSettings);
-$('setClose').addEventListener('click',closeSettings);
+$('setClose').addEventListener('click',()=>{if(saveBreaks()!==false)closeSettings()});
 $('sheetBg').addEventListener('click',()=>{if(!$('settings').hidden)closeSettings()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('settings').hidden)closeSettings()});
 $('swatches').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setTheme({accent:b.dataset.c})});
@@ -1173,8 +1197,19 @@ const dayKey=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMont
 const hm=ms=>{if(ms>0&&ms<3e4)return '<0:01';const m=Math.max(0,Math.round(ms/6e4));return Math.floor(m/60)+':'+String(m%60).padStart(2,'0')};
 const dec=ms=>(Math.round(ms/36e5*100)/100).toFixed(2).replace('.',',');
 const tOf=t=>new Date(t).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
-const durOf=(x,now)=>(x.e===null?now:x.e)-x.s;
-function sumRange(a,from,to,now){let s=0;for(const x of a){const st=Math.max(x.s,from),en=Math.min(x.e===null?now:x.e,to);if(en>st)s+=en-st}return s}
+const DEF_BRK={on:true,list:[['09:00','09:15'],['12:30','13:00']]};
+const tmOk=s=>/^([01]\d|2[0-3]):[0-5]\d$/.test(s),tmMin=s=>{const [a,b]=s.split(':').map(Number);return a*60+b};
+function getBrk(){try{const b=JSON.parse(lsGet('sc-breaks')||'null');if(b&&typeof b.on==='boolean'&&Array.isArray(b.list))return {on:b.on,list:b.list.filter(x=>Array.isArray(x)&&tmOk(x[0])&&tmOk(x[1])&&tmMin(x[1])>tmMin(x[0])).slice(0,8)}}catch(e){}return JSON.parse(JSON.stringify(DEF_BRK))}
+function brkIn(a0,a1){ // ms pauze binnen [a0,a1)
+  const b=getBrk();if(!b.on||!b.list.length||a1<=a0)return 0;let s=0;
+  for(let d=startOfDay(a0);d<a1;){const dt=new Date(d);for(const [p,q] of b.list){const [ph,pm]=p.split(':').map(Number),[qh,qm]=q.split(':').map(Number);const b0=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate(),ph,pm).getTime(),b1=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate(),qh,qm).getTime();const o0=Math.max(a0,b0),o1=Math.min(a1,b1);if(o1>o0)s+=o1-o0}
+    d=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()+1).getTime()}
+  return s;
+}
+const net=(a0,a1)=>Math.max(0,a1-a0-brkIn(a0,a1));
+const durOf=(x,now)=>net(x.s,x.e===null?now:x.e);
+function sumRange(a,from,to,now){let s=0;for(const x of a){const st=Math.max(x.s,from),en=Math.min(x.e===null?now:x.e,to);if(en>st)s+=net(st,en)}return s}
+function inBreak(t){const b=getBrk();if(!b.on)return null;const d=new Date(t),m=d.getHours()*60+d.getMinutes();const x=b.list.find(([p,q])=>m>=tmMin(p)&&m<tmMin(q));return x?x[1]:null}
 function startOfDay(t){const d=new Date(t);d.setHours(0,0,0,0);return d.getTime()}
 function startOfWeek(t){const d=new Date(startOfDay(t));const wd=(d.getDay()+6)%7;d.setDate(d.getDate()-wd);return d.getTime()}
 function isoWeek(t){const d=new Date(startOfDay(t));d.setDate(d.getDate()+3-((d.getDay()+6)%7));const w1=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-w1)/864e5-3+((w1.getDay()+6)%7))/7)}
@@ -1182,7 +1217,7 @@ function clockRender(){
   const a=loadH(),r=running(a),now=Date.now(),today=sumRange(a,startOfDay(now),now,now),cov=a.find(x=>x.e!==null&&x.s<=now&&x.e>now);
   $('clkStart').disabled=!!r;$('clkEnd').disabled=!r;$('clkDot').className='dot'+(r?' on':'');
   let t;
-  if(r){t='Bezig sinds '+tOf(r.s)+' · '+hm(now-r.s)+(r.p?' · '+r.p.n:'');if(now-r.s>14*36e5)t='Vergeten te stoppen? Bezig sinds '+(startOfDay(r.s)===startOfDay(now)?'':new Date(r.s).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric'})+' ')+tOf(r.s)}
+  if(r){const ib=inBreak(now);t=(ib?'Pauze tot '+ib:'Bezig sinds '+tOf(r.s))+' · '+hm(durOf(r,now))+(r.p?' · '+r.p.n:'');if(now-r.s>14*36e5)t='Vergeten te stoppen? Bezig sinds '+(startOfDay(r.s)===startOfDay(now)?'':new Date(r.s).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric'})+' ')+tOf(r.s)}
   else if(cov)t='Ingevuld tot '+tOf(cov.e)+(cov.p?' · '+cov.p.n:'')+' · vandaag '+hm(today);
   else t=today>0?'Vandaag '+hm(today)+' gewerkt':'Nog niet gestart';
   $('clkTxt').textContent=t;
@@ -1213,6 +1248,7 @@ function closeHours(){$('hours').hidden=true;$('addBtn').hidden=false;document.b
 function hoursRender(){
   const a=loadH(),now=Date.now(),m0=hMonth.getTime(),m1=new Date(hMonth.getFullYear(),hMonth.getMonth()+1,1).getTime();
   $('mName').textContent=hMonth.toLocaleDateString('nl-NL',{month:'long',year:'numeric'});
+  {const b=getBrk();$('hBrk').innerHTML=(b.on&&b.list.length?'Vaste pauzes worden afgetrokken: '+b.list.map(x=>esc(x[0])+'–'+esc(x[1])).join(', ')+'. ':'Er worden geen pauzes afgetrokken. ')+'<button type="button" class="linkbtn" id="hBrkBtn" style="padding:0;min-height:0">Pauzes aanpassen</button>';}
   $('mNext').disabled=m1>now;
   const mt=sumRange(a,m0,m1,now),wt=sumRange(a,startOfWeek(now),startOfWeek(now)+7*864e5,now),tt=sumRange(a,startOfDay(now),startOfDay(now)+864e5,now);
   $('tMonth').textContent=hm(mt);$('tWeek').textContent=hm(wt);$('tToday').textContent=hm(tt);
@@ -1228,22 +1264,23 @@ function hoursRender(){
   for(const k of keys){
     const ses=byDay[k],t0=ses[0].s,w=isoWeek(t0);
     if(w!==curW){flush();curW=w;wSum=0;buf=''}
-    const tot=ses.reduce((s,x)=>s+durOf(x,now),0);wSum+=tot;
+    const tot=ses.reduce((s,x)=>s+durOf(x,now),0),gross=ses.reduce((s,x)=>s+((x.e===null?now:x.e)-x.s),0);wSum+=tot;
     const d=new Date(t0);
-    buf+='<li class="'+(k===dayKey(now)?'today':'')+'"><button type="button" data-day="'+k+'"><span class="dd">'+d.toLocaleDateString('nl-NL',{weekday:'short'})+'<small>'+d.getDate()+' '+d.toLocaleDateString('nl-NL',{month:'short'})+'</small></span><span class="tt">'+ses.map(x=>tOf(x.s)+' – '+(x.e===null?'bezig':tOf(x.e))+(x.p?' · '+esc(x.p.n):'')).join('<br>')+'</span><span class="sum">'+hm(tot)+'<small>'+dec(tot)+' u</small></span></button></li>';
+    buf+='<li class="'+(k===dayKey(now)?'today':'')+'"><button type="button" data-day="'+k+'"><span class="dd">'+d.toLocaleDateString('nl-NL',{weekday:'short'})+'<small>'+d.getDate()+' '+d.toLocaleDateString('nl-NL',{month:'short'})+'</small></span><span class="tt">'+ses.map(x=>tOf(x.s)+' – '+(x.e===null?'bezig':tOf(x.e))+(x.p?' · '+esc(x.p.n):'')).join('<br>')+'</span><span class="sum">'+hm(tot)+'<small>'+dec(tot)+' u'+(gross-tot>=6e4?' · −'+hm(gross-tot)+' pauze':'')+'</small></span></button></li>';
   }
   flush();$('hList').innerHTML=html;
 }
 $('hClose').addEventListener('click',closeHours);
+$('hBrk').addEventListener('click',e=>{if(e.target.id==='hBrkBtn'){closeHours();openSettings();setTimeout(()=>{try{$('brkH').scrollIntoView({block:'start'})}catch(x){}},50)}});
 $('mPrev').addEventListener('click',()=>{hMonth=new Date(hMonth.getFullYear(),hMonth.getMonth()-1,1);hoursRender()});
 $('mNext').addEventListener('click',()=>{hMonth=new Date(hMonth.getFullYear(),hMonth.getMonth()+1,1);hoursRender()});
 $('hList').addEventListener('click',e=>{const b=e.target.closest('button[data-day]');if(b)openDay(b.dataset.day)});
 $('hAdd').addEventListener('click',()=>openDay(dayKey(Date.now()),true));
 $('hCopy').addEventListener('click',()=>{
   const a=loadH(),now=Date.now(),m0=hMonth.getTime(),m1=new Date(hMonth.getFullYear(),hMonth.getMonth()+1,1).getTime();
-  const rows=a.filter(x=>x.s>=m0&&x.s<m1).map(x=>[new Date(x.s).toLocaleDateString('nl-NL'),tOf(x.s),x.e===null?'':tOf(x.e),hm(durOf(x,now)),dec(durOf(x,now)),x.p?x.p.n.replace(/[\t\n]/g,' '):''].join('\t'));
+  const rows=a.filter(x=>x.s>=m0&&x.s<m1).map(x=>[new Date(x.s).toLocaleDateString('nl-NL'),tOf(x.s),x.e===null?'':tOf(x.e),hm((x.e===null?now:x.e)-x.s-durOf(x,now)),hm(durOf(x,now)),dec(durOf(x,now)),x.p?x.p.n.replace(/[\t\n]/g,' '):''].join('\t'));
   if(!rows.length){toast('Geen tijden in deze maand');return}
-  const t='Datum\tBegin\tEinde\tDuur\tUren\tProject\n'+rows.join('\n')+'\nTotaal\t\t\t'+hm(sumRange(a,m0,m1,now))+'\t'+dec(sumRange(a,m0,m1,now));
+  const t='Datum\tBegin\tEinde\tPauze\tDuur\tUren\tProject\n'+rows.join('\n')+'\nTotaal\t\t\t\t'+hm(sumRange(a,m0,m1,now))+'\t'+dec(sumRange(a,m0,m1,now));
   const fb=()=>{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();toast(ok?'Tabel gekopieerd, plak hem in Excel of een bericht':'Kopiëren lukte niet')};
   try{navigator.clipboard.writeText(t).then(()=>toast('Tabel gekopieerd, plak hem in Excel of een bericht'),fb)}catch(e){fb()}
 });
