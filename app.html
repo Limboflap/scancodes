@@ -999,7 +999,7 @@ $('importBtn').addEventListener('click',()=>{
 });
 
 
-const APP_VERSION=28,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
+const APP_VERSION=29,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}};
 const DEFAULT_UPD='https://raw.githubusercontent.com/Limboflap/scancodes/main/';
 const updUrl=()=>{const v=lsGet('sc-update-url');return (v===null?DEFAULT_UPD:v).trim()};
@@ -1170,7 +1170,7 @@ function saveH(a){a.sort((x,y)=>x.s-y.s);if(!lsSet(HKEY,JSON.stringify(a)))toast
 function mergeH(list){const a=loadH();let n=0;for(const x of list){if(!x||!Number.isFinite(x.s)||!(x.e===null||(Number.isFinite(x.e)&&x.e>x.s)))continue;if(a.some(y=>y.s===x.s))continue;a.push({s:x.s,e:x.e,p:cleanP(x.p)});n++}saveH(a);clockRender();return n}
 const running=a=>a.find(x=>x.e===null);
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
-const hm=ms=>{const m=Math.max(0,Math.round(ms/6e4));return Math.floor(m/60)+':'+String(m%60).padStart(2,'0')};
+const hm=ms=>{if(ms>0&&ms<3e4)return '<0:01';const m=Math.max(0,Math.round(ms/6e4));return Math.floor(m/60)+':'+String(m%60).padStart(2,'0')};
 const dec=ms=>(Math.round(ms/36e5*100)/100).toFixed(2).replace('.',',');
 const tOf=t=>new Date(t).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
 const durOf=(x,now)=>(x.e===null?now:x.e)-x.s;
@@ -1189,7 +1189,7 @@ function clockRender(){
   if(!$('hours').hidden)hoursRender();
 }
 $('clkStart').addEventListener('click',()=>{const a=loadH(),now=Date.now();if(running(a))return;const cov=a.find(x=>x.s<=now&&x.e!==null&&x.e>now);if(cov){toast('Er staat al een tijd tot '+tOf(cov.e)+'. Pas die aan in Mijn uren.');return}const p=projOf(cur());a.push({s:now,e:null,p});saveH(a);clockRender();try{navigator.vibrate&&navigator.vibrate(40)}catch(e){}toast('Gestart om '+tOf(now)+(p?' · '+p.n:''),'Ongedaan maken',()=>{const b=loadH(),x=running(b);if(x){b.splice(b.indexOf(x),1);saveH(b);clockRender()}})});
-$('clkEnd').addEventListener('click',()=>{const a=loadH(),r=running(a);if(!r)return;const prevE=r.e;r.e=Date.now();if(r.e-r.s<6e4){a.splice(a.indexOf(r),1);saveH(a);clockRender();toast('Gestopt; korter dan een minuut, dus niet bewaard');return}saveH(a);clockRender();try{navigator.vibrate&&navigator.vibrate([40,60,40])}catch(e){}toast('Gestopt om '+tOf(r.e)+' · '+hm(r.e-r.s),'Ongedaan maken',()=>{const b=loadH(),x=b.find(y=>y.s===r.s);if(x){x.e=null;saveH(b);clockRender()}})});
+$('clkEnd').addEventListener('click',()=>{const a=loadH(),r=running(a);if(!r)return;const prevE=r.e;r.e=Date.now();if(r.e<=r.s)r.e=r.s+1000;saveH(a);clockRender();try{navigator.vibrate&&navigator.vibrate([40,60,40])}catch(e){}toast('Gestopt om '+tOf(r.e)+' · '+hm(r.e-r.s),'Ongedaan maken',()=>{const b=loadH(),x=b.find(y=>y.s===r.s);if(x){x.e=null;saveH(b);clockRender()}})});
 $('clkStatus').addEventListener('click',()=>openHours());
 // tijdens het werken een andere code kiezen: aanbieden om over te stappen
 function clockHint(it){
