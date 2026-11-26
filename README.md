@@ -16,7 +16,7 @@ Je werkbon-barcodes altijd bij de hand: tik een code aan en scan hem met de Acti
 4. Updates komen vanzelf binnen bij het opstarten.
 
 ## Uren bijhouden
-Tik bovenin op **Start** als je begint en op **Einde** als je stopt (ook voor een pauze). Via het menu (☰) → **Mijn uren** zie je je tijden per dag, week en maand, kun je tijden aanpassen of toevoegen en een maand kopiëren als tabel voor Excel.
+Tik bovenin op **Start** als je begint en op **Einde** als je stopt (ook voor een pauze). Via het menu (☰) → **Mijn uren** zie je je tijden per dag, week en maand, zie je de totalen per project, kun je tijden aanpassen of toevoegen (ook met een eindtijd die nog moet komen) en een maand kopiëren als tabel voor Excel. Bij Start wordt de code die je openhebt als project opgeslagen; kies je tijdens het werken een andere code, dan vraagt de app of je wilt overstappen.
 Dit is je eigen geheugensteun, geen officiële registratie. De tijden staan alleen op je telefoon.
 
 ## Codes delen met een collega

@@ -68,6 +68,9 @@ h1,h2,.nm{font-family:"Barlow Condensed","Avenir Next Condensed",sans-serif-cond
 .days .sum small{display:block;font:400 12px Barlow,sans-serif;color:var(--mute);margin-top:2px}
 .days li.today button{background:var(--on);background:color-mix(in srgb,var(--y) 18%,var(--card))}
 .noh{padding:24px 6px;color:var(--mute);text-align:center}
+.prow{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:50px;padding:6px 14px;font-weight:600}.prow span:first-child{min-width:0;overflow-wrap:anywhere}
+.ses .dp{grid-column:1/-1;margin-top:-2px}
+.sesw{border-bottom:1px dashed var(--line);padding-bottom:8px;margin-bottom:10px}
 #dayEd{z-index:10}
 .ses{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto;gap:8px;align-items:center;margin-bottom:8px}
 .ses input{min-width:0}.ses .ic{width:44px;min-height:44px;border:1.5px solid var(--line);border-radius:8px}
@@ -398,6 +401,7 @@ body.sheet{overflow:hidden}
   <div class="in">
     <div class="mnav"><button type="button" id="mPrev" aria-label="Vorige maand">‹</button><b id="mName"></b><button type="button" id="mNext" aria-label="Volgende maand">›</button></div>
     <div class="tot"><div><small>Deze maand</small><b id="tMonth">0:00</b></div><div><small>Deze week</small><b id="tWeek">0:00</b></div><div><small>Vandaag</small><b id="tToday">0:00</b></div></div>
+    <div id="hProj"></div>
     <div id="hList"></div>
     <div class="row"><button type="button" class="grow" id="hAdd">+ Tijden toevoegen</button></div>
     <p class="hint">Tik op een dag om tijden aan te passen. Je uren staan alleen op deze telefoon; dit overzicht is je eigen hulpmiddel en geen officiële registratie.</p>
@@ -687,6 +691,7 @@ function render(){
 function select(id){
   const it=items.find(i=>i.id===id);if(!it)return;
   sel=id;it.used=Date.now();it.n=(it.n||0)+1;save();render();
+  try{clockHint(it)}catch(e){}
   const L=$('label');L.classList.add('flash');setTimeout(()=>L.classList.remove('flash'),160);
 }
 function nav(d){
@@ -1002,7 +1007,7 @@ $('importBtn').addEventListener('click',()=>{
 });
 
 
-const APP_VERSION=27,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
+const APP_VERSION=28,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}};
 const DEFAULT_UPD='https://raw.githubusercontent.com/Limboflap/scancodes/main/';
 const updUrl=()=>{const v=lsGet('sc-update-url');return (v===null?DEFAULT_UPD:v).trim()};
@@ -1165,9 +1170,12 @@ window.addEventListener('hashchange',checkHash);
 
 // ---------- urenregistratie ----------
 const HKEY='sc-hours';
-function loadH(){try{const a=JSON.parse(lsGet(HKEY)||'[]');return Array.isArray(a)?a.filter(x=>x&&Number.isFinite(x.s)&&(x.e===null||Number.isFinite(x.e))&&(x.e===null||x.e>x.s)).map(x=>({s:x.s,e:x.e})).sort((a,b)=>a.s-b.s):[]}catch(e){return[]}}
+function cleanP(p){if(!p||typeof p!=='object')return null;const n=str(p.n,60).trim(),c=str(p.c,40).trim();return n?{n,c}:null}
+function loadH(){try{const a=JSON.parse(lsGet(HKEY)||'[]');return Array.isArray(a)?a.filter(x=>x&&Number.isFinite(x.s)&&(x.e===null||Number.isFinite(x.e))&&(x.e===null||x.e>x.s)).map(x=>({s:x.s,e:x.e,p:cleanP(x.p)})).sort((a,b)=>a.s-b.s):[]}catch(e){return[]}}
+const projOf=it=>it&&it.name.trim().toLowerCase()!=='stop'?{n:it.name,c:it.code}:null;
+const pName=p=>p?p.n:'';
 function saveH(a){a.sort((x,y)=>x.s-y.s);if(!lsSet(HKEY,JSON.stringify(a)))toast('Opslaan lukt niet in deze browser.')}
-function mergeH(list){const a=loadH();let n=0;for(const x of list){if(!x||!Number.isFinite(x.s)||!(x.e===null||(Number.isFinite(x.e)&&x.e>x.s)))continue;if(a.some(y=>y.s===x.s))continue;a.push({s:x.s,e:x.e});n++}saveH(a);clockRender();return n}
+function mergeH(list){const a=loadH();let n=0;for(const x of list){if(!x||!Number.isFinite(x.s)||!(x.e===null||(Number.isFinite(x.e)&&x.e>x.s)))continue;if(a.some(y=>y.s===x.s))continue;a.push({s:x.s,e:x.e,p:cleanP(x.p)});n++}saveH(a);clockRender();return n}
 const running=a=>a.find(x=>x.e===null);
 const dayKey=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const hm=ms=>{const m=Math.max(0,Math.round(ms/6e4));return Math.floor(m/60)+':'+String(m%60).padStart(2,'0')};
@@ -1179,17 +1187,31 @@ function startOfDay(t){const d=new Date(t);d.setHours(0,0,0,0);return d.getTime(
 function startOfWeek(t){const d=new Date(startOfDay(t));const wd=(d.getDay()+6)%7;d.setDate(d.getDate()-wd);return d.getTime()}
 function isoWeek(t){const d=new Date(startOfDay(t));d.setDate(d.getDate()+3-((d.getDay()+6)%7));const w1=new Date(d.getFullYear(),0,4);return 1+Math.round(((d-w1)/864e5-3+((w1.getDay()+6)%7))/7)}
 function clockRender(){
-  const a=loadH(),r=running(a),now=Date.now(),today=sumRange(a,startOfDay(now),startOfDay(now)+864e5,now);
+  const a=loadH(),r=running(a),now=Date.now(),today=sumRange(a,startOfDay(now),now,now),cov=a.find(x=>x.e!==null&&x.s<=now&&x.e>now);
   $('clkStart').disabled=!!r;$('clkEnd').disabled=!r;$('clkDot').className='dot'+(r?' on':'');
   let t;
-  if(r){t='Bezig sinds '+tOf(r.s)+' · '+hm(now-r.s);if(now-r.s>14*36e5)t='Vergeten te stoppen? Bezig sinds '+(startOfDay(r.s)===startOfDay(now)?'':new Date(r.s).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric'})+' ')+tOf(r.s)}
+  if(r){t='Bezig sinds '+tOf(r.s)+' · '+hm(now-r.s)+(r.p?' · '+r.p.n:'');if(now-r.s>14*36e5)t='Vergeten te stoppen? Bezig sinds '+(startOfDay(r.s)===startOfDay(now)?'':new Date(r.s).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric'})+' ')+tOf(r.s)}
+  else if(cov)t='Ingevuld tot '+tOf(cov.e)+(cov.p?' · '+cov.p.n:'')+' · vandaag '+hm(today);
   else t=today>0?'Vandaag '+hm(today)+' gewerkt':'Nog niet gestart';
   $('clkTxt').textContent=t;
   if(!$('hours').hidden)hoursRender();
 }
-$('clkStart').addEventListener('click',()=>{const a=loadH();if(running(a))return;a.push({s:Date.now(),e:null});saveH(a);clockRender();try{navigator.vibrate&&navigator.vibrate(40)}catch(e){}toast('Gestart om '+tOf(Date.now()),'Ongedaan maken',()=>{const b=loadH(),x=running(b);if(x){b.splice(b.indexOf(x),1);saveH(b);clockRender()}})});
+$('clkStart').addEventListener('click',()=>{const a=loadH(),now=Date.now();if(running(a))return;const cov=a.find(x=>x.s<=now&&x.e!==null&&x.e>now);if(cov){toast('Er staat al een tijd tot '+tOf(cov.e)+'. Pas die aan in Mijn uren.');return}const p=projOf(cur());a.push({s:now,e:null,p});saveH(a);clockRender();try{navigator.vibrate&&navigator.vibrate(40)}catch(e){}toast('Gestart om '+tOf(now)+(p?' · '+p.n:''),'Ongedaan maken',()=>{const b=loadH(),x=running(b);if(x){b.splice(b.indexOf(x),1);saveH(b);clockRender()}})});
 $('clkEnd').addEventListener('click',()=>{const a=loadH(),r=running(a);if(!r)return;const prevE=r.e;r.e=Date.now();if(r.e-r.s<6e4){a.splice(a.indexOf(r),1);saveH(a);clockRender();toast('Gestopt; korter dan een minuut, dus niet bewaard');return}saveH(a);clockRender();try{navigator.vibrate&&navigator.vibrate([40,60,40])}catch(e){}toast('Gestopt om '+tOf(r.e)+' · '+hm(r.e-r.s),'Ongedaan maken',()=>{const b=loadH(),x=b.find(y=>y.s===r.s);if(x){x.e=null;saveH(b);clockRender()}})});
 $('clkStatus').addEventListener('click',()=>openHours());
+// tijdens het werken een andere code kiezen: aanbieden om over te stappen
+function clockHint(it){
+  const a=loadH(),r=running(a);if(!r||it.arch)return;
+  if(it.name.trim().toLowerCase()==='stop'){toast('Stoppen met werken?','Einde',()=>$('clkEnd').click(),8000);return}
+  if(r.p&&r.p.c===it.code)return;
+  if(!r.p){toast('Lopende tijd koppelen aan "'+it.name+'"?','Koppelen',()=>{const b=loadH(),x=running(b);if(x){x.p=projOf(it);saveH(b);clockRender()}},8000);return}
+  toast('Overstappen van "'+r.p.n+'" naar "'+it.name+'"?','Overstappen',()=>switchTo(it),8000);
+}
+function switchTo(it){
+  const b=loadH(),x=running(b),now=Date.now();if(!x)return;
+  if(now-x.s<6e4){x.p=projOf(it)}else{x.e=now;b.push({s:now,e:null,p:projOf(it)})}
+  saveH(b);clockRender();toast('Bezig met "'+it.name+'" sinds '+tOf(now));
+}
 setInterval(()=>{if(!document.hidden)clockRender()},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)clockRender()});
 // overzicht
@@ -1205,6 +1227,9 @@ function hoursRender(){
   // dagen van deze maand met tijden, nieuwste bovenaan, gegroepeerd per week
   const byDay={};for(const x of a){if(x.s<m0||x.s>=m1)continue;(byDay[dayKey(x.s)]=byDay[dayKey(x.s)]||[]).push(x)}
   const keys=Object.keys(byDay).sort().reverse();
+  const pm={};for(const x of a){if(x.s<m0||x.s>=m1)continue;const k=x.p?x.p.n:'Zonder project';pm[k]=(pm[k]||0)+durOf(x,now)}
+  const pk=Object.keys(pm).sort((p,q)=>pm[q]-pm[p]);
+  $('hProj').innerHTML=pk.length?'<div class="wk"><span>Per project</span><span></span></div><ul class="days plist">'+pk.map(k=>'<li><div class="prow"><span>'+esc(k)+'</span><span class="sum">'+hm(pm[k])+'<small>'+dec(pm[k])+' u</small></span></div></li>').join('')+'</ul>':'';
   if(!keys.length){$('hList').innerHTML='<p class="noh">Nog geen tijden in deze maand. Tik bovenin op <b>Start</b> als je begint met werken.</p>';return}
   let html='',curW=null,wSum=0,buf='';
   const flush=()=>{if(curW!==null)html+='<div class="wk"><span>Week '+curW+'</span><span>'+hm(wSum)+'</span></div><ul class="days">'+buf+'</ul>'};
@@ -1213,7 +1238,7 @@ function hoursRender(){
     if(w!==curW){flush();curW=w;wSum=0;buf=''}
     const tot=ses.reduce((s,x)=>s+durOf(x,now),0);wSum+=tot;
     const d=new Date(t0);
-    buf+='<li class="'+(k===dayKey(now)?'today':'')+'"><button type="button" data-day="'+k+'"><span class="dd">'+d.toLocaleDateString('nl-NL',{weekday:'short'})+'<small>'+d.getDate()+' '+d.toLocaleDateString('nl-NL',{month:'short'})+'</small></span><span class="tt">'+ses.map(x=>tOf(x.s)+' – '+(x.e===null?'bezig':tOf(x.e))).join('<br>')+'</span><span class="sum">'+hm(tot)+'<small>'+dec(tot)+' u</small></span></button></li>';
+    buf+='<li class="'+(k===dayKey(now)?'today':'')+'"><button type="button" data-day="'+k+'"><span class="dd">'+d.toLocaleDateString('nl-NL',{weekday:'short'})+'<small>'+d.getDate()+' '+d.toLocaleDateString('nl-NL',{month:'short'})+'</small></span><span class="tt">'+ses.map(x=>tOf(x.s)+' – '+(x.e===null?'bezig':tOf(x.e))+(x.p?' · '+esc(x.p.n):'')).join('<br>')+'</span><span class="sum">'+hm(tot)+'<small>'+dec(tot)+' u</small></span></button></li>';
   }
   flush();$('hList').innerHTML=html;
 }
@@ -1224,26 +1249,38 @@ $('hList').addEventListener('click',e=>{const b=e.target.closest('button[data-da
 $('hAdd').addEventListener('click',()=>openDay(dayKey(Date.now()),true));
 $('hCopy').addEventListener('click',()=>{
   const a=loadH(),now=Date.now(),m0=hMonth.getTime(),m1=new Date(hMonth.getFullYear(),hMonth.getMonth()+1,1).getTime();
-  const rows=a.filter(x=>x.s>=m0&&x.s<m1).map(x=>[new Date(x.s).toLocaleDateString('nl-NL'),tOf(x.s),x.e===null?'':tOf(x.e),hm(durOf(x,now)),dec(durOf(x,now))].join('\t'));
+  const rows=a.filter(x=>x.s>=m0&&x.s<m1).map(x=>[new Date(x.s).toLocaleDateString('nl-NL'),tOf(x.s),x.e===null?'':tOf(x.e),hm(durOf(x,now)),dec(durOf(x,now)),x.p?x.p.n.replace(/[\t\n]/g,' '):''].join('\t'));
   if(!rows.length){toast('Geen tijden in deze maand');return}
-  const t='Datum\tBegin\tEinde\tDuur\tUren\n'+rows.join('\n')+'\nTotaal\t\t\t'+hm(sumRange(a,m0,m1,now))+'\t'+dec(sumRange(a,m0,m1,now));
+  const t='Datum\tBegin\tEinde\tDuur\tUren\tProject\n'+rows.join('\n')+'\nTotaal\t\t\t'+hm(sumRange(a,m0,m1,now))+'\t'+dec(sumRange(a,m0,m1,now));
   const fb=()=>{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();toast(ok?'Tabel gekopieerd, plak hem in Excel of een bericht':'Kopiëren lukte niet')};
   try{navigator.clipboard.writeText(t).then(()=>toast('Tabel gekopieerd, plak hem in Excel of een bericht'),fb)}catch(e){fb()}
 });
 // dag bewerken
 let edDay=null;
 const toTimeStr=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
-function sesRow(s,e,run){return '<div class="ses"><input type="time" class="ds" value="'+s+'" aria-label="Begintijd"><span>–</span><input type="time" class="de" value="'+e+'" aria-label="Eindtijd"'+(run?' placeholder="bezig"':'')+'><button type="button" class="ic delS" aria-label="Deze tijd verwijderen">✕</button></div>'}
+let edOpts=[];
+function projOpts(extra){
+  const list=items.filter(i=>!i.arch&&i.name.trim().toLowerCase()!=='stop').map(i=>({n:i.name,c:i.code}));
+  for(const p of extra)if(p&&!list.some(x=>x.n===p.n&&x.c===p.c))list.push(p);
+  return list;
+}
+function sesRow(s,e,run,p){
+  const idx=p?edOpts.findIndex(x=>x.n===p.n&&x.c===p.c):-1;
+  return '<div class="ses sesw"><input type="time" class="ds" value="'+s+'" aria-label="Begintijd"><span>–</span><input type="time" class="de" value="'+e+'" aria-label="Eindtijd"'+(run?' placeholder="bezig"':'')+'><button type="button" class="ic delS" aria-label="Deze tijd verwijderen">✕</button>'+
+    '<select class="dp" aria-label="Project"><option value="">Geen project</option>'+edOpts.map((o,i)=>'<option value="'+i+'"'+(i===idx?' selected':'')+'>'+esc(o.n)+'</option>').join('')+'</select></div>';
+}
 function openDay(k,addNew){
   edDay=k;const a=loadH(),[y,m,d]=k.split('-').map(Number),d0=new Date(y,m-1,d).getTime();
   const ses=a.filter(x=>x.s>=d0&&x.s<d0+864e5);
   $('deDate').value=k;$('deErr').textContent='';
-  $('deList').innerHTML=ses.map(x=>sesRow(toTimeStr(x.s),x.e===null?'':toTimeStr(x.e),x.e===null)).join('')+((addNew||!ses.length)?sesRow('','',false):'');
+  edOpts=projOpts(ses.map(x=>x.p));
+  const defP=projOf(cur());
+  $('deList').innerHTML=ses.map(x=>sesRow(toTimeStr(x.s),x.e===null?'':toTimeStr(x.e),x.e===null,x.p)).join('')+((addNew||!ses.length)?sesRow('','',false,defP):'');
   $('deT').textContent=new Date(d0).toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});
   $('dayEd').hidden=false;$('sheetBg').hidden=false;
 }
 function closeDay(){$('dayEd').hidden=true;if($('hours').hidden){$('sheetBg').hidden=true}else $('sheetBg').hidden=true}
-$('deAdd').addEventListener('click',()=>{$('deList').insertAdjacentHTML('beforeend',sesRow('','',false))});
+$('deAdd').addEventListener('click',()=>{$('deList').insertAdjacentHTML('beforeend',sesRow('','',false,projOf(cur())))});
 $('deList').addEventListener('click',e=>{const b=e.target.closest('.delS');if(b)b.parentElement.remove()});
 $('deCancel').addEventListener('click',closeDay);
 $('deSave').addEventListener('click',()=>{
@@ -1259,8 +1296,8 @@ $('deSave').addEventListener('click',()=>{
     if(e!==null&&e<=s)e+=864e5; // over middernacht
     if(e===null&&base!==startOfDay(now)){$('deErr').textContent='Vul ook een eindtijd in (alleen vandaag mag een tijd nog bezig zijn).';return}
     if(s>now){$('deErr').textContent='Een begintijd kan niet in de toekomst liggen.';return}
-    if(e!==null&&e>now+6e4){$('deErr').textContent='Een eindtijd kan niet in de toekomst liggen.';return}
-    out.push({s,e});
+    const pv=r.querySelector('.dp').value,p=pv===''?null:(edOpts[+pv]?{n:edOpts[+pv].n,c:edOpts[+pv].c}:null);
+    out.push({s,e,p});
   }
   out.sort((p,q)=>p.s-q.s);
   for(let i=1;i<out.length;i++){const pe=out[i-1].e===null?now:out[i-1].e;if(out[i].s<pe){$('deErr').textContent='Twee tijden overlappen elkaar.';return}}
