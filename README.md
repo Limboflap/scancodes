@@ -26,7 +26,7 @@ De codes zitten in de link zelf; ze gaan niet via een server.
 
 ## Goed om te weten
 - Je codes staan alleen op je eigen telefoon. Maak af en toe een back-up via "Back-up en overzetten" onderaan in de app.
-- Stop, Overwerk en Werkplaats staan er standaard in.
+- Stop, Overwerk, Werkplaats, Montage en Transport staan er standaard in.
 
 ## Voorwaarden
 Scancodes is een gratis hulpmiddel van een particulier, niet gemaakt door of verbonden aan One Two (maker van de Action Tracker) of een werkgever.

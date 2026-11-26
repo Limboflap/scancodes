@@ -622,11 +622,18 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let items=load(),sel=null,q='',grp='',editId=null,lastDel=null,toastT=null,showArch=false;
 const SEED=[{name:'Stop',code:'/Z000001',sym:'39'},{name:'Werkplaats',code:'A3204',sym:'128'},{name:'Overwerk',code:'A9609399',sym:'128'}];
+const SEED2=[{name:'Montage',code:'A1392',sym:'128'},{name:'Transport',code:'A1393',sym:'39'}];
 (function seed(){
   let done=false;try{done=localStorage.getItem(KEY+'-seed')==='1'}catch(e){}
   if(done)return;
   for(const s of SEED)if(!items.some(i=>i.code===s.code&&i.sym===s.sym))items.push({id:'std'+s.code.replace(/\W/g,''),name:s.name,code:s.code,group:'Standaard',sym:s.sym,pin:true,used:0,n:0});
   save();try{localStorage.setItem(KEY+'-seed','1')}catch(e){}
+})();
+(function seed2(){ // Montage en Transport later toegevoegd: ook bij bestaande gebruikers
+  let done=false;try{done=localStorage.getItem(KEY+'-seed2')==='1'}catch(e){}
+  if(done)return;
+  for(const s of SEED2)if(!items.some(i=>i.code===s.code&&i.sym===s.sym))items.push({id:'std'+s.code.replace(/\W/g,''),name:s.name,code:s.code,group:'Standaard',sym:s.sym,pin:true,used:0,n:0});
+  save();try{localStorage.setItem(KEY+'-seed2','1')}catch(e){}
 })();
 sel=items.length?([...items].sort((a,b)=>(b.used||0)-(a.used||0))[0].id):null;
 
@@ -677,7 +684,7 @@ function render(){
     ?'<div class="hd"><div class="nm">'+esc(c.name)+'</div><div class="sub">'+esc(c.group||'Zonder groep')+(c.arch?' · archief':'')+'</div></div><div class="bc">'+svg(c.code,c.sym)+'</div><div class="codetxt">'+esc(c.sym==='39'?c.code.toUpperCase():c.code)+'</div><div class="zoom">Tik op de code voor groot scherm</div>'
     :'<div class="empty"><b>'+(items.length?'Kies een code':'Nog geen codes')+'</b>'+(items.length?'Tik hieronder op een code om hem hier te tonen.':'Tik rechtsonder op "Toevoegen" en maak een foto van de barcode op je werkbon. De code komt er dan meteen in. Daarna staat hij hier klaar om te scannen.')+'</div>';
   ['bigBtn','prevBtn','nextBtn'].forEach(id=>$(id).disabled=!c);
-  const ORD=['stop','overwerk','werkplaats'],rk=i=>{const k=ORD.indexOf(i.name.toLowerCase());return k<0?9:k};
+  const ORD=['stop','overwerk','werkplaats','montage','transport'],rk=i=>{const k=ORD.indexOf(i.name.toLowerCase());return k<0?9:k};
   const std=items.filter(i=>i.group==='Standaard'&&!i.arch).sort((a,b)=>rk(a)-rk(b)||a.name.localeCompare(b.name,'nl'));
   $('std').innerHTML=std.map(i=>'<button type="button" class="btn" data-id="'+esc(i.id)+'" aria-pressed="'+(i.id===sel)+'">'+esc(i.name)+'</button>').join('');
   const rec=items.filter(i=>i.used&&!i.arch&&i.group!=='Standaard').sort((a,b)=>b.used-a.used).slice(0,8);
@@ -1013,7 +1020,7 @@ $('importBtn').addEventListener('click',()=>{
 });
 
 
-const APP_VERSION=32,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
+const APP_VERSION=33,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}};
 const DEFAULT_UPD='https://raw.githubusercontent.com/Limboflap/scancodes/main/';
 const updUrl=()=>{const v=lsGet('sc-update-url');return (v===null?DEFAULT_UPD:v).trim()};
