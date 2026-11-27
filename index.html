@@ -683,7 +683,7 @@ function check(code,sym){
 const cur=()=>items.find(i=>i.id===sel)||null;
 function view(){
   const s=q.trim().toLowerCase();
-  return items.filter(i=>(!i.arch||showArch||s)&&(!grp||i.group===grp)&&(!s||(i.name+' '+i.code+' '+(i.group||'')).toLowerCase().includes(s)))
+  return items.filter(i=>(!i.arch||showArch||s)&&(s||grp==='Standaard'||i.group!=='Standaard')&&(!grp||i.group===grp)&&(!s||(i.name+' '+i.code+' '+(i.group||'')).toLowerCase().includes(s)))
     .sort((a,b)=>(!!a.arch-!!b.arch)||(!!b.pin-!!a.pin)||a.name.localeCompare(b.name,'nl',{numeric:true}));
 }
 function render(){
@@ -698,13 +698,13 @@ function render(){
   const rec=items.filter(i=>i.used&&!i.arch&&i.group!=='Standaard').sort((a,b)=>b.used-a.used).slice(0,8);
   $('recentBox').hidden=!rec.length;
   $('recent').innerHTML=rec.map(i=>'<button type="button" class="btn chip" data-id="'+esc(i.id)+'" aria-pressed="'+(i.id===sel)+'">'+esc(i.name)+'</button>').join('');
-  const gs=[...new Set(items.filter(i=>!i.arch||showArch).map(i=>i.group).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'nl'));
+  const gs=[...new Set(items.filter(i=>(!i.arch||showArch)&&i.group!=='Standaard').map(i=>i.group).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'nl'));
   if(grp&&!gs.includes(grp))grp='';
   $('chips').innerHTML=gs.length?['',...gs].map(g=>'<button type="button" class="btn chip" data-g="'+esc(g)+'" aria-pressed="'+(g===grp)+'">'+(g?esc(g):'Alles')+'</button>').join(''):'';
   $('groups').innerHTML=gs.map(g=>'<option value="'+esc(g)+'">').join('');
   const v=view();
   $('list').innerHTML=v.length?v.map(i=>'<li class="'+(i.id===sel?'on ':'')+(i.arch?'arch':'')+'"><button type="button" class="pick" data-id="'+esc(i.id)+'"><span class="nm">'+esc(i.name)+(i.arch?'<span class="tag">archief</span>':'')+'</span><small>'+(i.group?esc(i.group)+' · ':'')+esc(i.code)+'</small></button>'+(i.arch?'<button type="button" class="ic" data-unarch="'+esc(i.id)+'" aria-label="Terugzetten uit archief">↩</button>':'<button type="button" class="ic'+(i.pin?' pin':'')+'" data-pin="'+esc(i.id)+'" aria-label="'+(i.pin?'Losmaken':'Bovenaan vastzetten')+'" aria-pressed="'+!!i.pin+'">'+(i.pin?'★':'☆')+'</button>')+'<button type="button" class="ic" data-edit="'+esc(i.id)+'" aria-label="Wijzigen">✎</button></li>').join('')
-    :'<li class="none">'+(items.length?'Niets gevonden voor deze zoekopdracht.':'Je lijst is nog leeg.')+'</li>';
+    :'<li class="none">'+(q.trim()?'Niets gevonden voor deze zoekopdracht.':items.some(i=>i.group!=='Standaard')?'Geen codes in deze groep.':'Nog geen eigen codes. Tik rechtsonder op "Toevoegen".')+'</li>';
   const na=items.filter(i=>i.arch).length;if(!na)showArch=false;
   $('archToggle').hidden=!na;$('archToggle').textContent=showArch?'Archief verbergen':'Archief tonen ('+na+')';
   if(!$('full').hidden)renderFull();
@@ -1028,7 +1028,7 @@ $('importBtn').addEventListener('click',()=>{
 });
 
 
-const APP_VERSION=34,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
+const APP_VERSION=35,IN_APP=!!window.SC_LOADER||location.protocol==='file:';
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}};
 const DEFAULT_UPD='https://raw.githubusercontent.com/Limboflap/scancodes/main/';
 const updUrl=()=>{const v=lsGet('sc-update-url');return (v===null?DEFAULT_UPD:v).trim()};
